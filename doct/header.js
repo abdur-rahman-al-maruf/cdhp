@@ -125,7 +125,7 @@ window.initializeHeader = function() {
             e.preventDefault();
             signOut(auth).then(() => {
                 // Return to login page after successful sign out
-                window.location.href = 'index.html';
+                window.location.href = '../index.html';
             }).catch((error) => {
                 console.error("Sign Out Error:", error);
             });
@@ -277,7 +277,7 @@ window.initializeHeader = function() {
             }
         } else {
             // Unauthenticated user
-            window.location.href = 'index.html';
+            window.location.href = '../index.html';
         }
     });
 };

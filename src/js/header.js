@@ -93,7 +93,7 @@ window.initHeader = function() {
         signOutBtn.onclick = function(e) {
             e.preventDefault();
             signOut(auth).then(() => {
-                window.location.href = 'index.html';
+                window.location.href = '../../index.html';
             }).catch((error) => {
                 console.error("Sign Out Error:", error);
             });
@@ -274,7 +274,7 @@ window.initHeader = function() {
                 if(userNameDisplay) userNameDisplay.textContent = "Error loading name";
             }
         } else {
-            window.location.href = 'index.html';
+            window.location.href = '../../index.html';
         }
     });
 };
