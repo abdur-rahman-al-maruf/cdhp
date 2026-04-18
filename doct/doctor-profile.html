@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',
+                            accent: '#6366f1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .text-gray-400 { color: #cbd5e1 !important; }
+        .text-gray-500 { color: #94a3b8 !important; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* General Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* Loader & Toast Styles */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #14b8a6; }
+        #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; padding: 0.875rem 1.5rem; border-radius: 9999px; font-size: 0.875rem; transition: transform 0.4s ease, opacity 0.4s ease; opacity: 0; z-index: 9999; white-space: nowrap; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        #toast.success { border-bottom: 2px solid #14b8a6; }
+        #toast.error { border-bottom: 2px solid #ef4444; }
+
+        /* Edit Mode Styles */
+        .edit-input {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 4px 8px; border-radius: 6px; width: 100%; font-size: inherit;
+            display: none; /* Hidden by default */
+        }
+        .edit-input:focus { outline: none; border-color: #0ea5e9; }
+        textarea.edit-input { resize: vertical; min-height: 80px; }
+        
+        /* Edit Toggles */
+        .editing .edit-input { display: block; }
+        .editing .view-text { display: none; }
+        
+        /* "editing-only" elements are completely hidden unless parent has "editing" class */
+        .editing-only { display: none !important; }
+        .editing .editing-only { display: flex !important; } 
+
+        /* Checkbox styling for schedule */
+        input[type="checkbox"].orange-checkbox:checked {
+            background-color: #f97316;
+            border-color: #f97316;
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-brand-secondary selection:text-white pt-[70px]">
+
+    <!-- Loader & Toast -->
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+    <div id="toast"></div>
+
+    <!-- Dynamic Header -->
+    <div id="header-placeholder" data-header="header.html"></div>
+
+    <!-- Main Wrapper -->
+    <div class="flex h-[calc(100vh-70px)] w-full overflow-hidden relative">
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 pt-2 lg:p-8 lg:pt-4 relative z-10 w-full" id="profile-container">
+            
+            <!-- Background Glow Effects -->
+            <div class="absolute top-0 right-1/4 w-96 h-96 bg-brand-primary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+            <div class="absolute bottom-1/4 left-1/4 w-96 h-96 bg-brand-secondary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+            <!-- 1. Profile Header Info -->
+            <div class="glass-card mx-0 md:mx-6 mt-0 relative z-20 rounded-3xl p-6 flex flex-col md:flex-row items-center md:items-end gap-6 mb-8 shadow-xl shadow-black/50">
+                
+                <!-- Profile Image -->
+                <div class="relative group">
+                    <div class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#020617] bg-[#0f172a] overflow-hidden shrink-0 shadow-lg">
+                        <img id="display-avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Doctor Profile" class="w-full h-full object-cover">
+                    </div>
+                    <!-- Camera Button (Visible only in edit mode) -->
+                    <button id="upload-avatar-btn" class="editing-only absolute bottom-2 right-2 w-10 h-10 bg-brand-secondary text-white rounded-full flex items-center justify-center shadow-lg hover:bg-teal-500 transition-colors border-2 border-[#020617] cursor-pointer">
+                        <i class="fa-solid fa-camera"></i>
+                    </button>
+                    <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                </div>
+
+                <!-- Basic Details -->
+                <div class="flex-1 text-center md:text-left mb-2 md:mb-4">
+                    <div class="flex items-center justify-center md:justify-start gap-2 mb-1">
+                        <h1 id="display-name" class="text-2xl md:text-3xl font-bold text-white">Loading...</h1>
+                        <i class="fa-solid fa-circle-check text-brand-primary" title="Verified Professional"></i>
+                    </div>
+                    <p id="display-specialization" class="text-brand-secondary font-medium text-lg mb-2">Specialization</p>
+                    <p class="text-gray-400 text-sm flex items-center justify-center md:justify-start gap-2">
+                        <i class="fa-solid fa-location-dot"></i> <span id="display-location">Hospital/Location</span>
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap justify-center gap-3 mb-2 md:mb-4 shrink-0">
+                    <button id="btn-share" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-all border border-white/10 flex items-center gap-2">
+                        <i class="fa-solid fa-share-nodes"></i> Share
+                    </button>
+
+                    <!-- Edit Profile Button (Toggles overall Edit Mode) -->
+                    <button id="btn-edit-profile" class="bg-brand-primary hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-medium text-sm transition-all shadow-lg shadow-brand-primary/20 flex items-center gap-2">
+                        <i class="fa-solid fa-user-pen"></i> <span id="edit-btn-text">Edit Profile</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Main Grid Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10 pb-10 mx-0 md:mx-6">
+                
+                <!-- LEFT COLUMN (Sidebar) -->
+                <div class="flex flex-col gap-6">
+                    
+                    <!-- Professional Details Card -->
+                    <div class="glass-card rounded-2xl p-6 border-l-2 border-brand-primary">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-hospital-user text-brand-primary"></i> Professional Details
+                            </h3>
+                        </div>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 shrink-0"><i class="fa-solid fa-house-medical"></i></div>
+                                <div class="flex-1 w-full overflow-hidden">
+                                    <p class="text-gray-500 text-xs">Current Hospital/Clinic</p>
+                                    <p class="text-gray-300 font-medium view-text truncate" id="view-current-hosp">Not specified</p>
+                                    <input type="text" id="edit-current-hosp" class="edit-input mt-1" placeholder="e.g. Dhaka Medical College">
+                                </div>
+                            </div>
+                            
+                            <!-- Department & Specialization -->
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 shrink-0"><i class="fa-solid fa-heart-pulse"></i></div>
+                                <div class="flex-1 w-full overflow-hidden">
+                                    <p class="text-gray-500 text-xs">Department & Specialization</p>
+                                    <p class="text-gray-300 font-medium view-text truncate" id="view-dept">Not specified</p>
+                                    <input list="specializations-list" type="text" id="edit-dept" class="edit-input mt-1 w-full" placeholder="e.g. Cardiology">
+                                    <datalist id="specializations-list">
+                                        <option value="Cardiology">
+                                        <option value="Dermatology">
+                                        <option value="Endocrinology">
+                                        <option value="Gastroenterology">
+                                        <option value="General Surgery">
+                                        <option value="Gynecology & Obstetrics">
+                                        <option value="Internal Medicine">
+                                        <option value="Neurology">
+                                        <option value="Oncology">
+                                        <option value="Orthopedics">
+                                        <option value="Pediatrics">
+                                        <option value="Psychiatry">
+                                        <option value="Urology">
+                                    </datalist>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 shrink-0"><i class="fa-solid fa-building"></i></div>
+                                <div class="flex-1 w-full overflow-hidden">
+                                    <p class="text-gray-500 text-xs">Past Hospital/Clinic</p>
+                                    <p class="text-gray-300 font-medium view-text truncate" id="view-past-hosp">Not specified</p>
+                                    <input type="text" id="edit-past-hosp" class="edit-input mt-1" placeholder="e.g. Square Hospital">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Registration & Fees -->
+                    <div class="glass-card rounded-2xl p-6 border-l-2 border-brand-secondary">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-stethoscope text-brand-secondary"></i> Registration & Fees
+                            </h3>
+                        </div>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                <span class="text-gray-400">BMDC Registration Number</span>
+                                <span class="text-white font-medium view-text text-right" id="view-bmdc">Not specified</span>
+                                <input type="text" id="edit-bmdc" class="edit-input w-32 text-left" placeholder="e.g. A-45892">
+                            </div>
+                            <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                <span class="text-gray-400">Years of Experience</span>
+                                <span class="text-white font-medium view-text text-right" id="view-experience">Not specified</span>
+                                <input type="text" id="edit-experience" class="edit-input w-32 text-left" placeholder="e.g. 10+">
+                            </div>
+                            <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                <span class="text-gray-400">In-Person Consultation</span>
+                                <span class="text-white font-medium view-text text-right" id="view-fee-inperson">Not specified</span>
+                                <input type="number" id="edit-fee-inperson" class="edit-input w-32 text-left" placeholder="Amount (৳)">
+                            </div>
+                            <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                <span class="text-gray-400">Online Consultation</span>
+                                <span class="text-white font-medium view-text text-right" id="view-fee-online">Not specified</span>
+                                <input type="number" id="edit-fee-online" class="edit-input w-32 text-left" placeholder="Amount (৳)">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">Response Rate</span>
+                                <span class="text-white font-medium view-text text-right" id="view-response-rate">Not specified</span>
+                                <input type="text" id="edit-response-rate" class="edit-input w-32 text-left" placeholder="e.g. 98%">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule / Availability -->
+                    <div class="glass-card rounded-2xl p-0 overflow-hidden relative">
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fa-regular fa-clock text-orange-400"></i> Availability
+                                </h3>
+                                <button class="text-orange-400 hover:text-white text-xs transition-colors" id="btn-edit-schedule">
+                                    <i class="fa-solid fa-plus mr-1"></i> Add New
+                                </button>
+                            </div>
+                            <div class="space-y-3 text-sm" id="schedule-list">
+                                <!-- Dynamic schedules will load here -->
+                                <p class="text-gray-500 text-xs italic">No schedule added yet.</p>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Edit Form -->
+                        <div id="schedule-edit-form" class="bg-[#0a101f] border-t border-white/10 p-6 shadow-xl relative hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-500"></div>
+                            <h2 class="text-sm font-bold text-white mb-1">Add Consultation Schedule</h2>
+                            <p class="text-slate-400 text-xs mb-4">Set your availability.</p>
+                            
+                            <div class="space-y-4">
+                                <!-- Working Days -->
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-2">Available Days</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label class="flex items-center gap-1.5 cursor-pointer bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg hover:border-orange-500 transition-colors">
+                                            <input type="checkbox" value="Sat" class="day-checkbox orange-checkbox w-3.5 h-3.5 text-orange-500 bg-slate-900 border-slate-600 rounded focus:ring-orange-500 focus:ring-2">
+                                            <span class="text-xs text-white">Sat</span>
+                                        </label>
+                                        <label class="flex items-center gap-1.5 cursor-pointer bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg hover:border-orange-500 transition-colors">
+                                            <input type="checkbox" value="Sun" class="day-checkbox orange-checkbox w-3.5 h-3.5 text-orange-500 bg-slate-900 border-slate-600 rounded focus:ring-orange-500 focus:ring-2">
+                                            <span class="text-xs text-white">Sun</span>
+                                        </label>
+                                        <label class="flex items-center gap-1.5 cursor-pointer bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg hover:border-orange-500 transition-colors">
+                                            <input type="checkbox" value="Mon" class="day-checkbox orange-checkbox w-3.5 h-3.5 text-orange-500 bg-slate-900 border-slate-600 rounded focus:ring-orange-500 focus:ring-2">
+                                            <span class="text-xs text-white">Mon</span>
+                                        </label>
+                                        <label class="flex items-center gap-1.5 cursor-pointer bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg hover:border-orange-500 transition-colors">
+                                            <input type="checkbox" value="Tue" class="day-checkbox orange-checkbox w-3.5 h-3.5 text-orange-500 bg-slate-900 border-slate-600 rounded focus:ring-orange-500 focus:ring-2">
+                                            <span class="text-xs text-white">Tue</span>
+                                        </label>
+                                        <label class="flex items-center gap-1.5 cursor-pointer bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg hover:border-orange-500 transition-colors">
+                                            <input type="checkbox" value="Wed" class="day-checkbox orange-checkbox w-3.5 h-3.5 text-orange-500 bg-slate-900 border-slate-600 rounded focus:ring-orange-500 focus:ring-2">
+                                            <span class="text-xs text-white">Wed</span>
+                                        </label>
+                                        <label class="flex items-center gap-1.5 cursor-pointer bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg hover:border-orange-500 transition-colors">
+                                            <input type="checkbox" value="Thu" class="day-checkbox orange-checkbox w-3.5 h-3.5 text-orange-500 bg-slate-900 border-slate-600 rounded focus:ring-orange-500 focus:ring-2">
+                                            <span class="text-xs text-white">Thu</span>
+                                        </label>
+                                        <label class="flex items-center gap-1.5 cursor-pointer bg-slate-800/50 border border-slate-700 px-3 py-1.5 rounded-lg opacity-60">
+                                            <input type="checkbox" value="Fri" class="day-checkbox orange-checkbox w-3.5 h-3.5 text-orange-500 bg-slate-900 border-slate-600 rounded">
+                                            <span class="text-xs text-white">Fri</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Time Slots -->
+                                <div class="grid grid-cols-1 gap-4 pb-4 border-b border-slate-800">
+                                    <div class="flex gap-4">
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Start Time</label>
+                                            <input type="time" id="sch-start" value="09:00" class="w-full bg-[#020617] border border-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:border-orange-500 text-xs [color-scheme:dark]">
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">End Time</label>
+                                            <input type="time" id="sch-end" value="18:00" class="w-full bg-[#020617] border border-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:border-orange-500 text-xs [color-scheme:dark]">
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div class="w-1/2 pr-2">
+                                            <label class="block text-xs font-medium text-slate-300 mb-1">Duration</label>
+                                            <div class="relative">
+                                                <select id="sch-duration" class="w-full bg-[#020617] border border-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:border-orange-500 text-xs appearance-none">
+                                                    <option value="15" selected>15 mins</option>
+                                                    <option value="20" >20 mins</option>
+                                                    <option value="30">30 mins</option>
+                                                    <option value="45">45 mins</option>
+                                                    <option value="60">60 mins</option>
+                                                </select>
+                                                <i class="fa-solid fa-chevron-down absolute right-3 top-2.5 text-slate-500 text-[10px] pointer-events-none"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end gap-2">
+                                    <button id="btn-cancel-schedule" class="px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800 text-white text-xs font-medium transition-all">Cancel</button>
+                                    <button id="btn-save-schedule" class="px-5 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-medium transition-all shadow-[0_0_15px_rgba(234,88,12,0.2)]">Add Schedule</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN (Main Details) -->
+                <div class="lg:col-span-2 flex flex-col gap-6">
+                    
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl p-4 text-center ring-1 ring-white/10 hover:ring-brand-primary/50 transition-colors">
+                            <i class="fa-solid fa-users text-2xl text-brand-primary mb-2"></i>
+                            <h4 class="text-2xl font-bold text-white mb-1">5.2k+</h4>
+                            <p class="text-xs text-gray-400">Total Patients</p>
+                        </div>
+                        <div class="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl p-4 text-center ring-1 ring-white/10 hover:ring-emerald-400/50 transition-colors">
+                            <i class="fa-solid fa-video text-2xl text-emerald-400 mb-2"></i>
+                            <h4 class="text-2xl font-bold text-white mb-1">1.2k+</h4>
+                            <p class="text-xs text-gray-400">Online Consults</p>
+                        </div>
+                        <div class="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl p-4 text-center ring-1 ring-white/10 hover:ring-purple-400/50 transition-colors">
+                            <i class="fa-solid fa-award text-2xl text-purple-400 mb-2"></i>
+                            <h4 id="stat-experience" class="text-2xl font-bold text-white mb-1">---</h4>
+                            <p class="text-xs text-gray-400">Years Experience</p>
+                        </div>
+                        <div class="bg-[#0f172a]/80 backdrop-blur-md rounded-2xl p-4 text-center ring-1 ring-white/10 hover:ring-yellow-400/50 transition-colors">
+                            <i class="fa-solid fa-bolt text-2xl text-yellow-400 mb-2"></i>
+                            <h4 id="stat-response-rate" class="text-2xl font-bold text-white mb-1">---</h4>
+                            <p class="text-xs text-gray-400">Response Rate</p>
+                        </div>
+                    </div>
+
+                    <!-- About Section -->
+                    <div class="glass-card rounded-2xl p-6 md:p-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-white">About Me</h2>
+                        </div>
+                        <div class="view-text text-gray-400 text-sm leading-relaxed" id="view-about">
+                            No description provided.
+                        </div>
+                        <textarea id="edit-about" class="edit-input w-full p-3 bg-white/5 border border-white/20 rounded-lg text-sm text-gray-300" placeholder="Write about yourself..."></textarea>
+                    </div>
+
+                    <!-- Education & Qualifications -->
+                    <div class="glass-card rounded-2xl p-6 md:p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold text-white">Education & Qualifications</h2>
+                            <button id="btn-add-edu" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-brand-primary transition-colors">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="relative border-l border-white/10 ml-3 space-y-6" id="education-list">
+                            <!-- Dynamic education items will load here -->
+                            <p class="text-gray-500 text-xs italic pl-4">No education details added yet.</p>
+                        </div>
+
+                        <!-- Add Education Form -->
+                        <div id="education-edit-form" class="mt-6 p-4 bg-white/5 border border-white/10 rounded-lg hidden">
+                            <h4 class="text-sm font-bold text-brand-primary mb-3">Add New Qualification</h4>
+                            <input type="text" id="edu-degree" placeholder="Degree (e.g. MBBS)" class="w-full p-2 bg-[#020617] text-white border border-white/10 rounded mb-2 text-sm focus:outline-none focus:border-brand-primary">
+                            <input type="text" id="edu-inst" placeholder="Institution (e.g. Dhaka Medical College)" class="w-full p-2 bg-[#020617] text-white border border-white/10 rounded mb-2 text-sm focus:outline-none focus:border-brand-primary">
+                            <input type="text" id="edu-year" placeholder="Years (e.g. 2005 - 2010)" class="w-full p-2 bg-[#020617] text-white border border-white/10 rounded mb-3 text-sm focus:outline-none focus:border-brand-primary">
+                            
+                            <div class="flex justify-end gap-2">
+                                <button id="btn-cancel-edu" class="px-4 py-2 rounded border border-slate-600 text-white text-sm hover:bg-slate-800 transition-colors">Cancel</button>
+                                <button id="btn-save-edu" class="bg-brand-primary text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-500 transition-colors shadow-[0_0_10px_rgba(14,165,233,0.3)]">Add Qualification</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="load.js"></script>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        // 1. Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Variables
+        let currentUser = null;
+        let isEditMode = false;
+        
+        // Data Arrays
+        let scheduleData = [];
+        let educationData = [];
+
+        // UI Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `show ${type}`;
+            setTimeout(() => { t.className = ''; }, 3000);
+        }
+
+        // --- Cloudinary Upload Function ---
+        async function uploadFileToCloudinary(file) {
+            const cloudName = "dhcq8o9xq"; 
+            const uploadPreset = "cdhp_uploads"; 
+            const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", uploadPreset);
+
+            const response = await fetch(url, { method: "POST", body: formData });
+            const data = await response.json();
+            if (data.secure_url) return data.secure_url;
+            throw new Error(data.error.message);
+        }
+
+        // --- Step 1: Detect Logged in Doctor ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadDoctorData(user.uid);
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        // --- Step 2: Load Doctor Data ---
+        async function loadDoctorData(docId) {
+            try {
+                showLoader();
+                const docSnap = await getDoc(doc(db, "users", docId));
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // Name & Avatar
+                    document.getElementById('display-name').textContent = data.name || "Unknown Doctor";
+                    if (data.profileImageUrl) {
+                        document.getElementById('display-avatar').src = data.profileImageUrl;
+                    } else {
+                        document.getElementById('display-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'Doctor')}&background=0ea5e9&color=fff&size=200`;
+                    }
+
+                    // Professional Details
+                    updateField('current-hosp', data.currentHospital);
+                    updateField('dept', data.department);
+                    updateField('past-hosp', data.pastHospital);
+                    
+                    // Auto-sync Subtitles
+                    document.getElementById('display-specialization').textContent = data.department || "Specialization";
+                    document.getElementById('display-location').textContent = data.currentHospital || "Location";
+
+                    // Reg & Fees
+                    updateField('bmdc', data.bmdcReg);
+                    updateField('experience', data.experience);
+                    updateFieldCurrency('fee-inperson', data.consultFeeInPerson);
+                    updateFieldCurrency('fee-online', data.consultFeeOnline);
+                    updateField('response-rate', data.responseRate);
+
+                    // Sync stats
+                    document.getElementById('stat-experience').textContent = data.experience || "0+";
+                    document.getElementById('stat-response-rate').textContent = data.responseRate || "0%";
+
+                    // About
+                    updateField('about', data.about, "No description provided.");
+
+                    // Arrays
+                    scheduleData = data.availability || [];
+                    educationData = data.education || [];
+                    
+                    renderSchedule();
+                    renderEducation();
+                } else {
+                    showToast("Doctor profile not found", "error");
+                }
+                hideLoader();
+            } catch (error) {
+                hideLoader();
+                console.error(error);
+                showToast("Error loading profile", "error");
+            }
+        }
+
+        // Helper to update text and input values cleanly
+        function updateField(idSuffix, value, defaultViewText = "Not specified") {
+            const viewEl = document.getElementById(`view-${idSuffix}`);
+            const editEl = document.getElementById(`edit-${idSuffix}`);
+            if(viewEl) viewEl.innerText = value || defaultViewText;
+            if(editEl) editEl.value = value || '';
+        }
+
+        // Specialized helper for currency fields
+        function updateFieldCurrency(idSuffix, value) {
+            const viewEl = document.getElementById(`view-${idSuffix}`);
+            const editEl = document.getElementById(`edit-${idSuffix}`);
+            if(viewEl) viewEl.innerText = value ? `৳${value}` : "Not specified";
+            if(editEl) editEl.value = value || '';
+        }
+
+        // --- Step 3: Toggle Master Edit Mode ---
+        document.getElementById('btn-edit-profile').addEventListener('click', async () => {
+            const container = document.getElementById('profile-container');
+            const btnText = document.getElementById('edit-btn-text');
+            const btnIcon = document.querySelector('#btn-edit-profile i');
+
+            if (!isEditMode) {
+                // TURN ON EDIT MODE
+                isEditMode = true;
+                container.classList.add('editing');
+                btnText.textContent = "Save Changes";
+                btnIcon.classList.replace('fa-user-pen', 'fa-floppy-disk');
+            } else {
+                // TURN OFF EDIT MODE & SAVE OVERALL CHANGES
+                await saveProfileData();
+                isEditMode = false;
+                container.classList.remove('editing');
+                btnText.textContent = "Edit Profile";
+                btnIcon.classList.replace('fa-floppy-disk', 'fa-user-pen');
+                
+                // Hide any open sub-forms
+                document.getElementById('education-edit-form').classList.add('hidden');
+                document.getElementById('schedule-edit-form').classList.add('hidden');
+            }
+        });
+
+        // --- Step 4: Save Overall Profile Data ---
+        async function saveProfileData() {
+            try {
+                showLoader();
+                
+                const updatedData = {
+                    currentHospital: document.getElementById('edit-current-hosp').value,
+                    department: document.getElementById('edit-dept').value,
+                    pastHospital: document.getElementById('edit-past-hosp').value,
+                    bmdcReg: document.getElementById('edit-bmdc').value,
+                    experience: document.getElementById('edit-experience').value,
+                    consultFeeInPerson: document.getElementById('edit-fee-inperson').value,
+                    consultFeeOnline: document.getElementById('edit-fee-online').value,
+                    responseRate: document.getElementById('edit-response-rate').value,
+                    about: document.getElementById('edit-about').value,
+                    // Note: Education and Availability are saved live when added/deleted, 
+                    // but we re-sync them here to be completely safe.
+                    availability: scheduleData,
+                    education: educationData
+                };
+
+                await updateDoc(doc(db, "users", currentUser.uid), updatedData);
+                
+                // Sync text UI with new inputs
+                updateField('current-hosp', updatedData.currentHospital);
+                updateField('dept', updatedData.department);
+                updateField('past-hosp', updatedData.pastHospital);
+                updateField('bmdc', updatedData.bmdcReg);
+                updateField('experience', updatedData.experience);
+                updateFieldCurrency('fee-inperson', updatedData.consultFeeInPerson);
+                updateFieldCurrency('fee-online', updatedData.consultFeeOnline);
+                updateField('response-rate', updatedData.responseRate);
+                updateField('about', updatedData.about, "No description provided.");
+
+                // Auto sync titles
+                document.getElementById('display-specialization').textContent = updatedData.department || "Specialization";
+                document.getElementById('display-location').textContent = updatedData.currentHospital || "Location";
+
+                // Sync stats
+                document.getElementById('stat-experience').textContent = updatedData.experience || "0+";
+                document.getElementById('stat-response-rate').textContent = updatedData.responseRate || "0%";
+
+                hideLoader();
+                showToast("Profile updated successfully!");
+            } catch(error) {
+                hideLoader();
+                console.error(error);
+                showToast("Failed to save changes", "error");
+            }
+        }
+
+        // --- Step 5: Render & Edit Education (Independent Action inside Edit Mode) ---
+        function renderEducation() {
+            const list = document.getElementById('education-list');
+            list.innerHTML = '';
+            
+            if(educationData.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-xs italic pl-4">No education details added yet.</p>';
+                return;
+            }
+
+            educationData.forEach((edu, index) => {
+                const colorClass = index % 2 === 0 ? 'bg-brand-primary shadow-brand-primary/50 text-brand-primary' : 'bg-brand-secondary shadow-brand-secondary/50 text-brand-secondary';
+                
+                const item = document.createElement('div');
+                item.className = 'relative pl-6';
+                item.innerHTML = `
+                    <div class="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full ${colorClass.split(' ')[0]} shadow-[0_0_10px_rgba(0,0,0,0.5)] ${colorClass.split(' ')[1]}"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="text-white font-bold text-base">${edu.degree}</h4>
+                            <p class="${colorClass.split(' ')[2]} text-sm font-medium mb-1">${edu.inst}</p>
+                            <p class="text-gray-500 text-xs">${edu.year}</p>
+                        </div>
+                        <button onclick="window.deleteEdu(${index})" class="text-red-400 hover:text-red-500 text-xs"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        document.getElementById('btn-add-edu').addEventListener('click', () => {
+            document.getElementById('education-edit-form').classList.toggle('hidden');
+        });
+        
+        document.getElementById('btn-cancel-edu').addEventListener('click', () => {
+            document.getElementById('education-edit-form').classList.add('hidden');
+        });
+
+        document.getElementById('btn-save-edu').addEventListener('click', async () => {
+            const deg = document.getElementById('edu-degree').value;
+            const inst = document.getElementById('edu-inst').value;
+            const yr = document.getElementById('edu-year').value;
+            
+            if(deg && inst) {
+                educationData.push({ degree: deg, inst: inst, year: yr });
+                renderEducation();
+                
+                // Hide and Clear form
+                document.getElementById('education-edit-form').classList.add('hidden');
+                document.getElementById('edu-degree').value = '';
+                document.getElementById('edu-inst').value = '';
+                document.getElementById('edu-year').value = '';
+                
+                // Automatically sync to Firebase immediately to prevent data loss
+                await updateDoc(doc(db, "users", currentUser.uid), { education: educationData });
+                showToast("Qualification added to profile!");
+            } else {
+                showToast("Please enter Degree and Institution.", "error");
+            }
+        });
+
+        // Global function so onclick attribute works
+        window.deleteEdu = async function(index) {
+            educationData.splice(index, 1);
+            renderEducation();
+            // Automatically sync to Firebase immediately
+            await updateDoc(doc(db, "users", currentUser.uid), { education: educationData });
+            showToast("Qualification removed from profile.");
+        }
+
+        // --- Step 6: Render & Edit Schedule (Independent Action inside Edit Mode) ---
+        function formatTime12h(time24) {
+            let [h, m] = time24.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+
+        function renderSchedule() {
+            const list = document.getElementById('schedule-list');
+            list.innerHTML = '';
+            
+            if(scheduleData.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-xs italic">No schedule added yet.</p>';
+                return;
+            }
+
+            scheduleData.forEach((sch, index) => {
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-white/5 border border-white/10 px-3 py-2 rounded-lg mb-2';
+                item.innerHTML = `
+                    <span class="text-gray-300 font-medium text-xs break-words max-w-[35%] sm:max-w-[40%]">${sch.days}</span>
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <span class="text-brand-secondary font-bold text-xs">${sch.time}</span>
+                        ${sch.duration ? `<span class="text-slate-400 text-[10px] bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded whitespace-nowrap">${sch.duration} mins</span>` : ''}
+                        <button onclick="window.deleteSchedule(${index})" class="text-red-400 hover:text-red-500 text-xs ml-1"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        document.getElementById('btn-edit-schedule').addEventListener('click', () => {
+            document.getElementById('schedule-edit-form').classList.toggle('hidden');
+        });
+        
+        document.getElementById('btn-cancel-schedule').addEventListener('click', () => {
+            document.getElementById('schedule-edit-form').classList.add('hidden');
+        });
+
+        document.getElementById('btn-save-schedule').addEventListener('click', async () => {
+            const selectedDays = Array.from(document.querySelectorAll('.day-checkbox:checked')).map(cb => cb.value).join(', ');
+            const startTime = document.getElementById('sch-start').value;
+            const endTime = document.getElementById('sch-end').value;
+            const duration = document.getElementById('sch-duration').value;
+            
+            if(selectedDays && startTime && endTime) {
+                const timeString = `${formatTime12h(startTime)} - ${formatTime12h(endTime)}`;
+
+                scheduleData.push({ days: selectedDays, time: timeString, duration: duration });
+                renderSchedule();
+                
+                // Hide form and clear checkboxes
+                document.getElementById('schedule-edit-form').classList.add('hidden');
+                document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
+                
+                // Automatically sync to Firebase immediately
+                await updateDoc(doc(db, "users", currentUser.uid), { availability: scheduleData });
+                showToast("Schedule added to profile!");
+            } else {
+                showToast("Please select days and valid time", "error");
+            }
+        });
+
+        window.deleteSchedule = async function(index) {
+            scheduleData.splice(index, 1);
+            renderSchedule();
+            // Automatically sync to Firebase immediately
+            await updateDoc(doc(db, "users", currentUser.uid), { availability: scheduleData });
+            showToast("Schedule removed from profile.");
+        }
+
+        // --- Step 7: Avatar Upload (Independent Action inside Edit Mode) ---
+        const avatarBtn = document.getElementById('upload-avatar-btn');
+        const avatarInput = document.getElementById('avatar-input');
+        
+        avatarBtn.addEventListener('click', () => avatarInput.click());
+
+        avatarInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                showLoader();
+                const fileUrl = await uploadFileToCloudinary(file);
+                // Directly save the avatar link to DB as it's an independent action
+                await updateDoc(doc(db, "users", currentUser.uid), { profileImageUrl: fileUrl });
+                document.getElementById('display-avatar').src = fileUrl;
+                hideLoader();
+                showToast("Profile picture updated successfully!");
+            } catch (error) {
+                hideLoader();
+                showToast("Failed to upload image.", "error");
+            }
+        });
+
+        // --- Step 8: Share Action ---
+        document.getElementById('btn-share').addEventListener('click', () => {
+            // Generates link pointing to the PUBLIC patient view of this doctor
+            const shareUrl = window.location.origin + '/src/doctor_details_view.html?id=' + currentUser.uid;
+            navigator.clipboard.writeText(shareUrl);
+            showToast("Public profile link copied to clipboard!");
+        });
+
+    </script>
+</body>
+</html>

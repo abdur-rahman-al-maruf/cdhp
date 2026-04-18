@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Medical Records</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',   
+                            accent: '#6366f1',
+                            emerald: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 1rem;
+        }
+
+        /* General Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .rx-symbol {
+            font-family: serif;
+            font-size: 2.5rem;
+            font-weight: bold;
+            font-style: italic;
+            color: #14b8a6;
+            line-height: 1;
+        }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #14b8a6; }
+        
+        /* Custom Input Styles */
+        .rx-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .rx-input:focus {
+            border-color: #14b8a6;
+            background: rgba(20, 184, 166, 0.05);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(20,184,166,0.15);
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-brand-secondary selection:text-white pt-[70px]">
+
+    <div id="header-placeholder" data-header="header.html"></div>
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+    
+    <div class="flex h-[calc(100vh-70px)] w-full overflow-hidden relative">
+
+        <!-- Background Decor (Dark mode glow) -->
+        <div class="absolute top-0 right-1/4 w-[500px] h-[500px] bg-brand-secondary/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+        <div class="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-brand-primary/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+
+        <main class="flex-1 overflow-y-auto px-3 pt-4 pb-8 lg:px-8 lg:pt-8 lg:pb-10 relative z-10 w-full custom-scroll">
+            
+            <!-- Patient Header Info -->
+            <div id="patient-info-header" class="glass-card p-4 mb-6 flex items-center gap-4 hidden">
+                <img id="header-patient-avatar" src="" class="w-12 h-12 rounded-full border-2 border-white/20 object-cover" alt="Patient">
+                <div>
+                    <h2 id="header-patient-name" class="text-lg font-bold text-white leading-tight">Loading...</h2>
+                    <p class="text-xs text-gray-400">Patient Medical Record</p>
+                </div>
+            </div>
+
+            <!-- ======================================================= -->
+            <!-- VIEW 1: CONSULTATION HISTORY LIST -->
+            <!-- ======================================================= -->
+            <div id="view-list" class="max-w-4xl mx-auto block animate-[fadeIn_0.3s_ease-out]">
+                
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                            <i class="fa-solid fa-file-medical text-brand-primary"></i> Patient History
+                        </h1>
+                        <p class="text-sm text-gray-400 mt-1">Review past consultations and medical documents for this patient.</p>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <!-- Search Box -->
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                            <input type="text" id="search-input" placeholder="Search records..." class="w-full bg-[#0a101f] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-primary transition-all shadow-sm">
+                        </div>
+                        
+                        <!-- View Reports Button -->
+                        <button id="btn-view-reports" class="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white border border-white/10 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 shrink-0" onclick="window.showUploadView()">
+                            <i class="fa-solid fa-folder-open text-brand-primary"></i> Patient Reports
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Access Denied State (For Privacy) -->
+                <div id="access-denied" class="hidden flex-col items-center justify-center py-20 opacity-80 glass-card">
+                    <i class="fa-solid fa-lock text-6xl mb-4 text-red-400/50"></i>
+                    <h3 class="text-xl font-bold text-white">Access Denied</h3>
+                    <p class="text-sm text-gray-400 mt-2">This patient has restricted access to their medical history.</p>
+                    <button onclick="history.back()" class="mt-6 bg-brand-primary hover:bg-blue-500 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all">Go Back</button>
+                </div>
+
+                <!-- List Container -->
+                <div class="space-y-4" id="consultation-list">
+                    <!-- Javascript will inject past consultations here -->
+                </div>
+            </div>
+
+            <!-- ======================================================= -->
+            <!-- VIEW 2: DETAILED CONSULTATION DATA -->
+            <!-- ======================================================= -->
+            <div id="view-details" class="hidden max-w-[1400px] mx-auto animate-[fadeIn_0.3s_ease-out]">
+                
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="window.showList()" class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-300 hover:bg-white/10 hover:text-white transition-all shadow-sm shrink-0">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">Consultation Details</h1>
+                        <p class="text-sm text-gray-400 mt-0.5">Review prescription, lab reports, and clinical notes.</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-brand-secondary relative overflow-hidden">
+                    <div class="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-brand-secondary/10 to-transparent pointer-events-none"></div>
+                    
+                    <div class="flex items-center gap-4 relative z-10 w-full sm:w-auto">
+                        <img id="detail-doc-avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="w-14 h-14 rounded-full border-2 border-white/10 shadow-sm object-cover" alt="Doctor">
+                        <div>
+                            <h2 id="detail-doc-name" class="text-lg font-bold text-white leading-tight">Dr. Name</h2>
+                            <p id="detail-doc-specialty" class="text-xs sm:text-sm text-gray-400">Specialization - Hospital</p>
+                            <div id="detail-visit-date" class="mt-1.5 inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-md text-[11px] font-bold border border-emerald-500/20">
+                                <i class="fa-regular fa-calendar-check"></i> Visit Date: --
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 relative z-10 w-full sm:w-auto mt-2 sm:mt-0 justify-end">
+                        <button class="bg-brand-primary hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-2" onclick="window.print()">
+                            <i class="fa-solid fa-print"></i> Print / PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-10">
+                    
+                    <div class="xl:col-span-4 flex flex-col gap-5">
+                        
+                        <div class="flex bg-[#0a101f] border border-white/10 rounded-xl p-1 shrink-0 shadow-sm">
+                            <button class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all side-tab-btn active bg-white/10 text-white shadow-sm border border-white/5" data-target="tab-vitals">
+                                <i class="fa-solid fa-heart-pulse mr-1"></i> Vitals
+                            </button>
+                            <button class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all side-tab-btn text-gray-500 hover:text-gray-300 border border-transparent" data-target="tab-history">
+                                <i class="fa-solid fa-clock-rotate-left mr-1"></i> History
+                            </button>
+                            <button class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all side-tab-btn text-gray-500 hover:text-gray-300 border border-transparent" data-target="tab-reports">
+                                <i class="fa-solid fa-microscope mr-1"></i> Reports
+                            </button>
+                        </div>
+
+                        <div id="tab-vitals" class="tab-content active glass-card p-5 h-full">
+                            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-white/5">
+                                <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400">
+                                    <i class="fa-solid fa-heart-pulse"></i>
+                                </div>
+                                <h3 class="text-sm font-bold text-white">Recorded Vitals</h3>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-[#020617] p-3 rounded-xl border border-white/5 relative">
+                                    <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Blood Pressure</p>
+                                    <p class="text-lg font-bold text-white"><span id="vital-bp">--</span> <span class="text-[10px] text-gray-500 font-medium">mmHg</span></p>
+                                </div>
+                                <div class="bg-[#020617] p-3 rounded-xl border border-white/5 relative">
+                                    <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Heart Rate</p>
+                                    <p class="text-lg font-bold text-white"><span id="vital-hr">--</span> <span class="text-[10px] text-gray-500 font-medium">bpm</span></p>
+                                </div>
+                                <div class="bg-[#020617] p-3 rounded-xl border border-orange-500/20 relative">
+                                    <p class="text-[10px] text-orange-400 uppercase font-bold mb-1">Temperature</p>
+                                    <p class="text-lg font-bold text-orange-400"><span id="vital-temp">--</span> <span class="text-[10px] font-bold">°F</span></p>
+                                </div>
+                                <div class="bg-[#020617] p-3 rounded-xl border border-white/5 relative">
+                                    <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">SpO2</p>
+                                    <p class="text-lg font-bold text-white"><span id="vital-spo2">--</span> <span class="text-[10px] text-gray-500 font-medium">%</span></p>
+                                </div>
+                                <div class="bg-[#020617] p-3 rounded-xl border border-white/5 relative">
+                                    <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Weight</p>
+                                    <p class="text-lg font-bold text-white"><span id="vital-weight">--</span> <span class="text-[10px] text-gray-500 font-medium">kg</span></p>
+                                </div>
+                                <div class="bg-[#020617] p-3 rounded-xl border border-white/5 relative">
+                                    <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">RBS</p>
+                                    <p class="text-lg font-bold text-white"><span id="vital-rbs">--</span> <span class="text-[10px] text-gray-500 font-medium">mmol/L</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tab-history" class="tab-content glass-card p-5 h-full">
+                            <div class="mb-5">
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2.5 flex items-center gap-2">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> Initial Complaint
+                                </h3>
+                                <div class="bg-[#020617] rounded-xl p-3 border border-white/5">
+                                    <p id="history-complaint" class="text-sm text-gray-300 italic">"..."</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-5">
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2.5 flex items-center gap-2">
+                                    <i class="fa-solid fa-shield-virus text-red-400"></i> Allergies
+                                </h3>
+                                <div id="history-allergies" class="flex flex-wrap gap-2">
+                                    <span class="text-sm text-gray-500">None specified</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2.5 flex items-center gap-2">
+                                    <i class="fa-solid fa-file-medical text-purple-400"></i> Past Medical History
+                                </h3>
+                                <div class="bg-[#020617] rounded-xl p-3 border border-white/5">
+                                    <ul id="history-medical" class="list-disc list-inside text-sm text-gray-300 space-y-1.5 marker:text-brand-primary">
+                                        <li>...</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tab-reports" class="tab-content glass-card p-5 h-full">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Available Lab Reports</h3>
+                            <div id="appt-reports-list" class="space-y-2">
+                                <!-- Reports will be dynamically loaded here -->
+                                <p class="text-sm text-gray-500 italic">No reports available.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <div class="xl:col-span-8 flex flex-col gap-6">
+                        
+                        <div class="glass-card p-5">
+                            <h3 class="text-sm font-bold text-white mb-4 pb-3 border-b border-white/5 flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                                    <i class="fa-solid fa-stethoscope"></i>
+                                </div>
+                                Clinical Diagnosis
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="flex flex-col h-full">
+                                    <label class="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 shrink-0">
+                                        <i class="fa-solid fa-head-side-cough text-orange-400"></i> Chief Complaints (C/C)
+                                    </label>
+                                    <div class="bg-[#020617] rounded-xl p-3 border border-white/5 flex-1 flex flex-col">
+                                        <p id="rx-cc" class="text-sm text-gray-300 leading-relaxed">...</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col h-full">
+                                    <label class="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 shrink-0">
+                                        <i class="fa-solid fa-user-check text-emerald-400"></i> On Examination (O/E)
+                                    </label>
+                                    <div class="bg-[#020617] rounded-xl p-3 border border-white/5 flex-1 flex flex-col">
+                                        <p id="rx-oe" class="text-sm text-gray-300 leading-relaxed">...</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col h-full">
+                                    <label class="flex items-center gap-1.5 text-[11px] font-bold text-brand-primary uppercase tracking-wider mb-2 shrink-0">
+                                        <i class="fa-solid fa-user-doctor"></i> Provisional Dx (P/Dx)
+                                    </label>
+                                    <div class="bg-brand-primary/5 rounded-xl p-3 border border-brand-primary/20 flex-1 flex flex-col">
+                                        <p id="rx-pdx" class="text-sm font-bold text-brand-primary leading-relaxed">...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card flex flex-col relative overflow-hidden border-t-4 border-t-brand-secondary">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-[0.015] pointer-events-none z-0">
+                                <i class="fa-solid fa-prescription text-[15rem] text-white"></i>
+                            </div>
+
+                            <div class="p-5 border-b border-white/5 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#0a101f]/50">
+                                <div class="flex items-center gap-3">
+                                    <span class="rx-symbol">Rx</span>
+                                    <div>
+                                        <h2 class="text-lg font-bold text-white">Prescribed Medications</h2>
+                                    </div>
+                                </div>
+                                
+                                <div id="rx-mode-switcher" class="flex bg-[#020617] border border-white/10 rounded-lg p-1 shadow-sm hidden">
+                                    <button class="px-4 py-1.5 rounded-md text-[11px] uppercase tracking-wide font-bold text-white bg-white/10 shadow-sm transition-all rx-tab-btn border border-white/5" data-target="digital-rx">
+                                        <i class="fa-solid fa-keyboard mr-1"></i> Digital
+                                    </button>
+                                    <button class="px-4 py-1.5 rounded-md text-[11px] uppercase tracking-wide font-bold text-gray-500 hover:text-white transition-all rx-tab-btn border border-transparent" data-target="upload-rx">
+                                        <i class="fa-solid fa-file-arrow-down mr-1"></i> Scanned Copy
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="digital-rx" class="rx-content p-5 relative z-10 space-y-3 block">
+                                <div id="medicine-list" class="space-y-3"></div>
+                            </div>
+
+                            <div id="upload-rx" class="rx-content p-6 flex-col items-center justify-center relative z-10 hidden">
+                                <div class="w-full border-2 border-dashed border-white/10 rounded-2xl p-10 text-center bg-white/5 flex flex-col items-center">
+                                    <div class="bg-brand-primary/10 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-primary/20">
+                                        <i class="fa-solid fa-file-prescription text-2xl text-brand-primary"></i>
+                                    </div>
+                                    <h3 class="text-base font-bold text-white mb-2">Scanned Prescription Available</h3>
+                                    <p class="text-sm text-gray-400 mb-6 leading-relaxed">The doctor has provided a scanned copy or PDF of the prescription.</p>
+                                    <div class="flex gap-3 mt-2">
+                                        <button id="btn-view-rx" class="bg-white/5 hover:bg-white/10 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors inline-flex items-center gap-2 shadow-sm border border-white/10">
+                                            <i class="fa-regular fa-eye"></i> View File
+                                        </button>
+                                        <button id="btn-download-rx" class="bg-brand-primary hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors inline-flex items-center gap-2 shadow-md">
+                                            <i class="fa-solid fa-download"></i> Download
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="no-rx-msg" class="p-8 text-center text-gray-500 italic hidden z-10 relative">
+                                No medications were prescribed.
+                            </div>
+
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="glass-card p-5">
+                                <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2 border-b border-white/5 pb-2">
+                                    <i class="fa-solid fa-flask text-blue-400"></i> Investigations Advised
+                                </h3>
+                                <div class="bg-[#020617] rounded-xl p-3 border border-white/5 min-h-[5rem]">
+                                    <ul id="rx-investigations" class="list-disc list-inside text-sm text-gray-300 space-y-1.5 marker:text-brand-primary">
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="glass-card p-5 bg-amber-500/5 border border-amber-500/10">
+                                <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2 border-b border-amber-500/10 pb-2">
+                                    <i class="fa-regular fa-comment-dots text-amber-400"></i> Advice & Follow-up
+                                </h3>
+                                <div class="bg-[#020617]/50 rounded-xl p-3 border border-amber-500/10 min-h-[5rem]">
+                                    <ul id="rx-advice" class="list-disc list-inside text-sm text-gray-300 space-y-1.5 marker:text-amber-400">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================= -->
+            <!-- VIEW 3: VIEW MEDICAL RECORDS (NO UPLOAD) -->
+            <!-- ======================================================= -->
+            <div id="view-upload" class="hidden max-w-3xl mx-auto animate-[fadeIn_0.3s_ease-out]">
+                
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-4">
+                        <button onclick="window.showList()" class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-300 hover:bg-white/10 hover:text-white transition-all shadow-sm shrink-0">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <h1 class="text-2xl font-bold text-white tracking-tight">Patient's Saved Reports</h1>
+                            <p class="text-sm text-gray-400 mt-1">View external documents and lab reports uploaded by the patient.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Uploads List -->
+                <div class="glass-card p-6 rounded-2xl">
+                    <div id="uploaded-reports-list" class="space-y-3">
+                        <!-- Populated by JS -->
+                        <p class="text-sm text-gray-500 italic text-center py-8">No reports available.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-notification" class="fixed top-20 right-5 max-w-sm w-full bg-[#0f172a] border-l-4 border-brand-secondary rounded-xl shadow-2xl p-4 hidden z-50 flex items-start gap-3 transition-all duration-300 transform translate-x-full opacity-0">
+        <div class="text-brand-secondary mt-0.5" id="toast-icon-wrap"><i class="fa-solid fa-circle-check text-xl"></i></div>
+        <div class="flex-1">
+            <h4 class="text-sm font-bold text-white mb-0.5" id="toast-title">Notification</h4>
+            <p class="text-xs text-gray-400" id="toast-message">Action performed successfully.</p>
+        </div>
+    </div>
+    <script src="load.js"></script>
+    <!-- FIREBASE LOGIC & UI ACTIONS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        // 1. Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Variables
+        let currentUser = null;
+        let targetPatientId = null;
+        let targetPatientData = null;
+        
+        let completedAppointments = [];
+        let patientReports = [];
+
+        // UI Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        window.showToast = function(title, message, isError = false) {
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-message').textContent = message;
+
+            if (isError) {
+                toast.classList.replace('border-brand-secondary', 'border-red-500');
+                document.getElementById('toast-icon-wrap').classList.replace('text-brand-secondary', 'text-red-500');
+                document.getElementById('toast-icon-wrap').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-xl"></i>';
+            } else {
+                toast.classList.replace('border-red-500', 'border-brand-secondary');
+                document.getElementById('toast-icon-wrap').classList.replace('text-red-500', 'text-brand-secondary');
+                document.getElementById('toast-icon-wrap').innerHTML = '<i class="fa-solid fa-circle-check text-xl"></i>';
+            }
+
+            toast.classList.remove('hidden');
+            toast.classList.add('toast-enter');
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('toast-enter');
+            }, 3000);
+        }
+
+        function getApptTimestamp(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return 0; 
+            try {
+                const [timePart, ampm] = timeStr.split(' ');
+                let [hours, mins] = timePart.split(':').map(Number);
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+                const [y, m, d] = dateStr.split('-').map(Number);
+                return new Date(y, m - 1, d, hours, mins).getTime();
+            } catch(e) { return 0; }
+        }
+
+        // --- Init & Load Data ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Doctor Portal Logic: Require patientId
+                const urlParams = new URLSearchParams(window.location.search);
+                targetPatientId = urlParams.get('patientId') || urlParams.get('id');
+                
+                if (!targetPatientId) {
+                    showToast("Patient ID missing.", true);
+                    setTimeout(() => window.location.href = 'DoctorDashboard.html', 1500);
+                    return;
+                }
+
+                await loadTargetPatientData();
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        async function loadTargetPatientData() {
+            showLoader();
+            try {
+                const pDoc = await getDoc(doc(db, "users", targetPatientId));
+                if (pDoc.exists()) {
+                    targetPatientData = pDoc.data();
+                    patientReports = targetPatientData.reports || [];
+
+                    // Set Patient Header Info
+                    document.getElementById('patient-info-header').classList.remove('hidden');
+                    document.getElementById('header-patient-name').textContent = targetPatientData.name || "Unknown Patient";
+                    document.getElementById('header-patient-avatar').src = targetPatientData.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(targetPatientData.name || 'Patient')}&background=0ea5e9&color=fff`;
+
+                    // Privacy Check
+                    const isShared = targetPatientData.settings?.shareMedicalHistory !== false; // Default true
+                    if (!isShared) {
+                        document.getElementById('view-list').classList.add('hidden');
+                        document.getElementById('view-list').classList.remove('block');
+                        document.getElementById('access-denied').classList.remove('hidden');
+                        document.getElementById('access-denied').classList.add('flex'); // Changed from flex('flex') which is invalid
+                        hideLoader();
+                        return; // Stop loading data
+                    }
+
+                    // Proceed to load appointments & reports
+                    await loadCompletedConsultations();
+                    renderUploadsList();
+                }
+            } catch (error) {
+                console.error("Error fetching patient data:", error);
+                showToast("Error loading patient data", "error");
+            }
+            hideLoader();
+        }
+
+        async function loadCompletedConsultations() {
+            try {
+                const container = document.getElementById('consultation-list');
+                container.innerHTML = '';
+
+                // Fetch "Completed" appointments for the target patient
+                const q = query(
+                    collection(db, "appointments"), 
+                    where("patientId", "==", targetPatientId),
+                    where("status", "==", "Completed")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                completedAppointments = [];
+
+                querySnapshot.forEach((doc) => {
+                    completedAppointments.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort by appointment date and time (Most recent first)
+                completedAppointments.sort((a, b) => {
+                    const timeA = getApptTimestamp(a.date, a.time);
+                    const timeB = getApptTimestamp(b.date, b.time);
+                    return timeB - timeA; 
+                });
+
+                if (completedAppointments.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-20 opacity-60 glass-card">
+                            <i class="fa-solid fa-notes-medical text-6xl mb-4 text-gray-600"></i>
+                            <h3 class="text-xl font-bold text-gray-400">No History Found</h3>
+                            <p class="text-sm text-gray-500 mt-2">No completed consultations found for this patient.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Render List View Cards
+                completedAppointments.forEach((appt) => {
+                    const [y, m, d] = appt.date.split('-');
+                    const dateObj = new Date(y, m - 1, d);
+                    const dayNum = dateObj.getDate().toString().padStart(2, '0');
+                    const monthShort = dateObj.toLocaleDateString('en-US', { month: 'short' });
+
+                    const card = document.createElement('div');
+                    card.className = `glass-card p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-white/5 cursor-pointer transition-colors`;
+                    card.onclick = () => window.showDetails(appt.id);
+                    
+                    const hasPdf = appt.prescription && appt.prescription.uploadedRxUrl && appt.prescription.rxMode === 'upload';
+                    const downloadBtnStr = hasPdf 
+                        ? `<button class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all" onclick="event.stopPropagation(); window.downloadFile('${appt.prescription.uploadedRxUrl}', 'Prescription_${appt.date}.pdf');" title="Download PDF"><i class="fa-solid fa-download"></i></button>`
+                        : '';
+
+                    card.innerHTML = `
+                        <div class="flex items-center gap-4 sm:gap-5 w-full">
+                            <div class="bg-brand-secondary/10 border border-brand-secondary/20 text-brand-secondary rounded-xl w-14 h-14 sm:w-16 sm:h-16 flex flex-col items-center justify-center shrink-0">
+                                <span class="text-xl sm:text-2xl font-black leading-none">${dayNum}</span>
+                                <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mt-0.5">${monthShort}</span>
+                            </div>
+                            
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-base sm:text-lg font-bold text-white leading-tight truncate">${appt.doctorName}</h3>
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1.5">
+                                    <p class="text-xs sm:text-sm text-gray-400 flex items-center gap-2 truncate">
+                                        <i class="fa-solid fa-stethoscope text-brand-secondary w-3 text-center"></i> <span class="truncate">${appt.department}</span>
+                                    </p>
+                                    <p class="text-xs sm:text-sm text-gray-400 flex items-center gap-2 truncate">
+                                        <i class="fa-regular fa-hospital text-brand-secondary w-3 text-center"></i> <span class="truncate">${appt.hospital}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0 mt-2 sm:mt-0">
+                            <button class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all" title="View Details">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            ${downloadBtnStr}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Error loading history:", error);
+                showToast("Error loading data", "error");
+            }
+        }
+
+        // --- Search Functionality (List View) ---
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#consultation-list > div');
+            
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                if (text.includes(query)) {
+                    row.style.display = 'flex';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // --- Details View Rendering ---
+        window.showDetails = async (apptId) => {
+            const appt = completedAppointments.find(a => a.id === apptId);
+            if (!appt) return;
+
+            // Header Elements
+            document.getElementById('detail-doc-name').textContent = appt.doctorName;
+            document.getElementById('detail-doc-specialty').textContent = `${appt.department} - ${appt.hospital}`;
+            document.getElementById('detail-doc-avatar').src = appt.doctorImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(appt.doctorName)}&background=0ea5e9&color=fff`;
+            
+            const [y, m, d] = appt.date.split('-');
+            const dateObj = new Date(y, m - 1, d);
+            const dateFormatted = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            document.getElementById('detail-visit-date').innerHTML = `<i class="fa-regular fa-calendar-check"></i> Visit Date: ${dateFormatted}`;
+
+            // Vitals Tab
+            const v = appt.vitals || {};
+            document.getElementById('vital-bp').textContent = v.bp || '--';
+            document.getElementById('vital-hr').textContent = v.hr || '--';
+            document.getElementById('vital-temp').textContent = v.temp || '--';
+            document.getElementById('vital-spo2').textContent = v.spo2 || '--';
+            document.getElementById('vital-weight').textContent = v.weight || '--';
+            document.getElementById('vital-rbs').textContent = v.rbs || '--';
+
+            // History Tab
+            document.getElementById('history-complaint').textContent = appt.symptoms ? `"${appt.symptoms}"` : "No initial symptoms provided.";
+            
+            const allergyContainer = document.getElementById('history-allergies');
+            if(targetPatientData.allergies) {
+                allergyContainer.innerHTML = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded text-xs font-bold">${targetPatientData.allergies}</span>`;
+            } else {
+                allergyContainer.innerHTML = `<span class="text-sm text-gray-500">None specified</span>`;
+            }
+            
+            const medicalList = document.getElementById('history-medical');
+            if(targetPatientData.medicalHistory && targetPatientData.medicalHistory.trim() !== '') {
+                const histories = targetPatientData.medicalHistory.split('\n').filter(h => h.trim());
+                medicalList.innerHTML = histories.map(h => `<li>${h}</li>`).join('');
+            } else {
+                medicalList.innerHTML = `<li>No past medical history recorded.</li>`;
+            }
+
+            // Clinical Diagnosis
+            const rx = appt.prescription || {};
+            document.getElementById('rx-cc').innerHTML = (rx.cc || '--').replace(/\n/g, '<br>');
+            document.getElementById('rx-oe').innerHTML = (rx.oe || '--').replace(/\n/g, '<br>');
+            document.getElementById('rx-pdx').innerHTML = (rx.pdx || '--').replace(/\n/g, '<br>');
+
+            // Investigations & Advice
+            const invList = document.getElementById('rx-investigations');
+            invList.innerHTML = '';
+            if (rx.investigations) {
+                rx.investigations.split('\n').filter(i => i.trim()).forEach(i => {
+                    invList.innerHTML += `<li>${i}</li>`;
+                });
+            } else {
+                invList.innerHTML = '<li class="list-none text-gray-500 italic">None advised</li>';
+            }
+
+            const advList = document.getElementById('rx-advice');
+            advList.innerHTML = '';
+            if (rx.advice) {
+                rx.advice.split('\n').filter(a => a.trim()).forEach(a => {
+                    advList.innerHTML += `<li>${a}</li>`;
+                });
+            } else {
+                advList.innerHTML = '<li class="list-none text-gray-500 italic">None provided</li>';
+            }
+
+            // Show Doctor's Lab Reports in Tab 3
+            const apptReportsList = document.getElementById('appt-reports-list');
+            apptReportsList.innerHTML = '';
+            
+            // Show ALL reports in this tab so the doctor doesn't miss anything
+            const availableReports = patientReports;
+            
+            if(availableReports.length > 0) {
+                availableReports.forEach(report => {
+                    const isPdf = report.fileName.toLowerCase().endsWith('.pdf');
+                    const icon = isPdf ? '<i class="fa-solid fa-file-pdf text-xl"></i>' : '<i class="fa-solid fa-image text-xl"></i>';
+                    const iconBg = isPdf ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between bg-[#0a101f] p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-colors cursor-pointer';
+                    div.onclick = () => window.viewFile(report.url);
+                    div.innerHTML = `
+                        <div class="flex items-center gap-4 overflow-hidden">
+                            <div class="w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0">
+                                ${icon}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-white leading-tight truncate">${report.fileName}</p>
+                                <p class="text-xs text-gray-400 mt-1">${new Date(report.date).toLocaleDateString()} • ${report.size}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 pl-2">
+                            <button onclick="event.stopPropagation(); window.viewFile('${report.url}')" class="text-gray-400 hover:text-white w-10 h-10 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors shadow-sm" title="View">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); window.downloadFile('${report.url}', '${report.fileName}')" class="text-gray-400 hover:text-brand-primary w-10 h-10 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors shadow-sm" title="Download">
+                                <i class="fa-solid fa-download"></i>
+                            </button>
+                        </div>
+                    `;
+                    apptReportsList.appendChild(div);
+                });
+            } else {
+                apptReportsList.innerHTML = '<p class="text-sm text-gray-500 italic">No reports available.</p>';
+            }
+
+            // Prescription Body (Digital vs Uploaded)
+            const switcher = document.getElementById('rx-mode-switcher');
+            const digRx = document.getElementById('digital-rx');
+            const upRx = document.getElementById('upload-rx');
+            const noRx = document.getElementById('no-rx-msg');
+            const medList = document.getElementById('medicine-list');
+            
+            medList.innerHTML = ''; // Clear existing
+            digRx.classList.add('hidden'); digRx.classList.remove('block');
+            upRx.classList.add('hidden'); upRx.classList.remove('flex');
+            noRx.classList.add('hidden');
+            switcher.classList.add('hidden');
+
+            const hasDigital = rx.medicines && rx.medicines.length > 0;
+            const hasUpload = !!rx.uploadedRxUrl;
+
+            if (!hasDigital && !hasUpload) {
+                noRx.classList.remove('hidden');
+            } else if (hasDigital && hasUpload) {
+                switcher.classList.remove('hidden');
+                // Build Digital List
+                buildDigitalMeds(rx.medicines, medList);
+                // Build Upload View
+                buildUploadRx(rx.uploadedRxUrl, appt.date);
+                // Default show whatever mode doctor saved, or digital
+                if(rx.rxMode === 'upload') {
+                    document.querySelector('.rx-tab-btn[data-target="upload-rx"]').click();
+                } else {
+                    document.querySelector('.rx-tab-btn[data-target="digital-rx"]').click();
+                }
+            } else if (hasDigital) {
+                buildDigitalMeds(rx.medicines, medList);
+                digRx.classList.remove('hidden'); digRx.classList.add('block');
+            } else if (hasUpload) {
+                buildUploadRx(rx.uploadedRxUrl, appt.date);
+                upRx.classList.remove('hidden'); upRx.classList.add('flex');
+            }
+
+            // Show Details View
+            document.getElementById('view-list').classList.add('hidden');
+            document.getElementById('view-list').classList.remove('block');
+            document.getElementById('view-upload').classList.add('hidden');
+            document.getElementById('view-upload').classList.remove('block');
+            document.getElementById('view-details').classList.remove('hidden');
+            document.getElementById('view-details').classList.add('block');
+            document.querySelector('main').scrollTo(0, 0);
+        };
+
+        function buildDigitalMeds(medicines, container) {
+            medicines.forEach(med => {
+                let icon = 'fa-pills';
+                let colorClass = 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+                if(med.type.toLowerCase() === 'syrup' || med.type.toLowerCase() === 'suspension') { icon = 'fa-bottle-droplet'; colorClass = 'bg-orange-500/10 text-orange-400 border border-orange-500/20'; }
+                else if(med.type.toLowerCase() === 'injection') { icon = 'fa-syringe'; colorClass = 'bg-red-500/10 text-red-400 border border-red-500/20'; }
+                else if(med.type.toLowerCase() === 'capsule') { icon = 'fa-capsules'; colorClass = 'bg-pink-500/10 text-pink-400 border border-pink-500/20'; }
+                
+                const div = document.createElement('div');
+                div.className = 'bg-[#020617] p-4 rounded-xl border border-white/5 shadow-sm flex flex-col gap-3';
+                div.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full ${colorClass} flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="fa-solid ${icon} text-xs"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">${med.type}</p>
+                            <h4 class="text-sm font-bold text-white">${med.name}</h4>
+                        </div>
+                    </div>
+                    <div class="bg-[#0f172a] border border-white/5 rounded-lg p-2.5 flex items-center gap-2 justify-between">
+                        <div class="text-center px-1 flex-1">
+                            <p class="text-[9px] text-gray-500 uppercase font-bold">Dose</p>
+                            <p class="text-xs font-bold text-brand-primary">${med.dose}</p>
+                        </div>
+                        <div class="w-px h-6 bg-white/10"></div>
+                        <div class="text-center px-1 flex-1">
+                            <p class="text-[9px] text-gray-500 uppercase font-bold">Timing</p>
+                            <p class="text-xs font-bold text-gray-300">${med.timing}</p>
+                        </div>
+                        <div class="w-px h-6 bg-white/10"></div>
+                        <div class="text-center px-1 flex-1">
+                            <p class="text-[9px] text-gray-500 uppercase font-bold">Duration</p>
+                            <p class="text-xs font-bold text-gray-300">${med.duration}</p>
+                        </div>
+                        ${med.instruction ? `
+                        <div class="w-px h-6 bg-white/10"></div>
+                        <div class="text-center px-1 flex-[2]">
+                            <p class="text-[9px] text-gray-500 uppercase font-bold">Instruction</p>
+                            <p class="text-xs font-medium text-gray-400 italic truncate" title="${med.instruction}">${med.instruction}</p>
+                        </div>` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function buildUploadRx(url, date) {
+            const btnDownload = document.getElementById('btn-download-rx');
+            const btnView = document.getElementById('btn-view-rx');
+            
+            btnDownload.onclick = () => window.downloadFile(url, `Prescription_${date}.pdf`);
+            btnView.onclick = () => window.viewFile(url);
+        }
+
+        // --- File Download & View Helpers ---
+        window.viewFile = function(url) {
+            if(url) window.open(url, '_blank');
+        };
+
+        window.downloadFile = function(url, filename) {
+            if (!url) return;
+            try {
+                // Cloudinary fl_attachment forces download
+                const parts = url.split('/upload/');
+                if(parts.length === 2) {
+                    const downloadUrl = parts[0] + '/upload/fl_attachment/' + parts[1];
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = filename || 'download';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    window.open(url, '_blank');
+                }
+            } catch(e) {
+                console.error("Error downloading file:", e);
+                window.open(url, '_blank');
+            }
+        };
+
+        // --- View 3: View Reports (Read Only for Doctor) ---
+        window.showUploadView = () => {
+            document.getElementById('view-list').classList.add('hidden');
+            document.getElementById('view-list').classList.remove('block');
+            document.getElementById('view-details').classList.add('hidden');
+            document.getElementById('view-details').classList.remove('block');
+            document.getElementById('view-upload').classList.remove('hidden');
+            document.getElementById('view-upload').classList.add('block');
+            document.querySelector('main').scrollTo(0, 0);
+        };
+
+        window.showList = () => {
+            document.getElementById('view-details').classList.add('hidden');
+            document.getElementById('view-details').classList.remove('block');
+            document.getElementById('view-upload').classList.add('hidden');
+            document.getElementById('view-upload').classList.remove('block');
+            document.getElementById('view-list').classList.remove('hidden');
+            document.getElementById('view-list').classList.add('block');
+            document.querySelector('main').scrollTo(0, 0);
+        };
+
+        function renderUploadsList() {
+            const list = document.getElementById('uploaded-reports-list');
+            list.innerHTML = '';
+            
+            // Show ALL reports in this view so the doctor has access to the full repository
+            const myUploads = patientReports;
+
+            if(myUploads.length === 0) {
+                list.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-8">No reports available for this patient.</p>';
+                return;
+            }
+
+            myUploads.forEach(report => {
+                const isPdf = report.fileName.toLowerCase().endsWith('.pdf');
+                const icon = isPdf ? '<i class="fa-solid fa-file-pdf text-xl"></i>' : '<i class="fa-solid fa-image text-xl"></i>';
+                const iconBg = isPdf ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-[#0a101f] p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-colors cursor-pointer';
+                div.onclick = () => window.viewFile(report.url);
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-4 overflow-hidden">
+                        <div class="w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0">
+                            ${icon}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-white leading-tight truncate">${report.fileName}</p>
+                            <p class="text-xs text-gray-400 mt-1">${new Date(report.date).toLocaleDateString()} • ${report.size}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 pl-2">
+                        <button onclick="event.stopPropagation(); window.viewFile('${report.url}')" class="text-gray-400 hover:text-white w-10 h-10 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors shadow-sm" title="View">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); window.downloadFile('${report.url}', '${report.fileName}')" class="text-gray-400 hover:text-brand-primary w-10 h-10 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors shadow-sm" title="Download">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+    </script>
+    
+    <!-- UI Tabs Logic -->
+    <script>
+        const sideTabBtns = document.querySelectorAll('.side-tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        sideTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sideTabBtns.forEach(b => {
+                    b.classList.remove('bg-white/10', 'text-white', 'shadow-sm', 'border-white/5');
+                    b.classList.add('text-gray-500', 'border-transparent');
+                });
+                btn.classList.add('bg-white/10', 'text-white', 'shadow-sm', 'border-white/5');
+                btn.classList.remove('text-gray-500', 'border-transparent');
+
+                tabContents.forEach(content => content.classList.remove('active'));
+                const targetId = btn.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
+        const rxTabBtns = document.querySelectorAll('.rx-tab-btn');
+        const rxContents = document.querySelectorAll('.rx-content');
+
+        rxTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                rxTabBtns.forEach(b => {
+                    b.classList.remove('bg-white/10', 'text-white', 'border-white/5', 'shadow-sm');
+                    b.classList.add('text-gray-500', 'border-transparent');
+                });
+                btn.classList.add('bg-white/10', 'text-white', 'border-white/5', 'shadow-sm');
+                btn.classList.remove('text-gray-500', 'border-transparent');
+
+                rxContents.forEach(content => {
+                    content.classList.add('hidden');
+                    content.classList.remove('block', 'flex');
+                });
+                const targetId = btn.getAttribute('data-target');
+                const targetEl = document.getElementById(targetId);
+                targetEl.classList.remove('hidden');
+                if (targetId === 'upload-rx') {
+                    targetEl.classList.add('flex');
+                } else {
+                    targetEl.classList.add('block');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

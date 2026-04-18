@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completed Consultations</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',  
+                            accent: '#6366f1',
+                            emerald: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* General Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* Loader & Toast Styles */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #10b981; }
+        #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; padding: 0.875rem 1.5rem; border-radius: 9999px; font-size: 0.875rem; transition: transform 0.4s ease, opacity 0.4s ease; opacity: 0; z-index: 9999; white-space: nowrap; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        #toast.success { border-bottom: 2px solid #10b981; }
+        #toast.error { border-bottom: 2px solid #ef4444; }
+
+        /* Smooth fade transition for filtering */
+        .patient-row { transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete; }
+        .hidden-row { opacity: 0; transform: scale(0.98); position: absolute; pointer-events: none; z-index: -1; display: none; }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-brand-emerald selection:text-white pt-[70px]">
+
+    <div id="header-placeholder" data-header="header.html"></div>
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+    <div id="toast"></div>
+
+    <!-- Main Wrapper -->
+    <div class="flex h-[calc(100vh-70px)] w-full overflow-hidden relative">
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto px-4 py-2 lg:px-8 lg:py-4 relative z-10 w-full">
+            
+            <!-- Background Glow Effects -->
+            <div class="absolute top-0 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+            <!-- 1. Header and Overview -->
+            <div class="glass-card rounded-3xl p-4 md:p-5 mb-4 relative z-10 shadow-xl border-l-4 border-emerald-500">
+                
+                <!-- ব্রেডক্রাম্ব ও টাইটেল -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 mb-2">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+                            <i class="fa-solid fa-clipboard-check text-emerald-500"></i> 
+                            Completed Consultations
+                        </h1>
+                        <p class="text-sm text-gray-400 mt-1 max-w-2xl">
+                            Review past consultations, access prescriptions, and patient history of your patients.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap gap-3 mt-3 border-t border-white/5 pt-3">
+                    <div class="relative flex-1 lg:flex-none">
+                        <i class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <select id="date-filter" class="w-full lg:w-[200px] bg-[#020617] border border-white/10 text-white text-sm rounded-lg pl-9 pr-8 py-2 focus:border-emerald-500 outline-none appearance-none cursor-pointer transition-colors">
+                            <option value="all">All Time</option>
+                            <option value="today" id="opt-today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="7days">Last 7 Days</option>
+                            <option value="month">This Month</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
+                    </div>
+                    
+                    <div class="relative flex-1 lg:flex-none">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-input" placeholder="Search by Patient Name or ID..." class="w-full lg:w-[300px] bg-[#020617] border border-white/10 text-white text-sm rounded-lg pl-9 pr-4 py-2 focus:border-emerald-500 outline-none placeholder-gray-500 transition-colors">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ২. Mean List (Completed Patients List) -->
+            <div class="space-y-4 relative z-10 pb-12 mt-4" id="patient-list">
+                <!-- JavaScript will inject cards here -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="load.js"></script>
+
+    <!-- FIREBASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let allCompletedAppointments = [];
+
+        // UI Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `show ${type}`;
+            setTimeout(() => { t.className = ''; }, 3000);
+        }
+
+        // Date Helpers
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const formatOptions = { day: 'numeric', month: 'short' };
+        document.getElementById('opt-today').textContent = `Today (${today.toLocaleDateString('en-GB', formatOptions)})`;
+
+        // Generate accurate timestamp from "YYYY-MM-DD" and "HH:MM AM/PM"
+        function getApptTimestamp(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return 0; 
+            try {
+                const [timePart, ampm] = timeStr.split(' ');
+                let [hours, mins] = timePart.split(':').map(Number);
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+                
+                const [y, m, d] = dateStr.split('-').map(Number);
+                return new Date(y, m - 1, d, hours, mins).getTime();
+            } catch(e) {
+                return 0;
+            }
+        }
+
+        // Display relative date string (Today, Yesterday, or actual Date)
+        function getDisplayDateString(dateStr) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const apptDate = new Date(y, m - 1, d);
+            
+            const isToday = apptDate.toDateString() === today.toDateString();
+            const isYesterday = apptDate.toDateString() === yesterday.toDateString();
+            
+            const formatted = apptDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            
+            if (isToday) return `${formatted} (Today)`;
+            if (isYesterday) return `${formatted} (Yesterday)`;
+            return formatted;
+        }
+
+        // Generate Initials
+        function getInitials(name) {
+            let initials = name.match(/\b\w/g) || [];
+            initials = ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+            return initials || 'UP';
+        }
+
+        // Add 20 mins to start time to mock "Finished at" (if not explicitly stored in DB)
+        function getFinishedTime(timeStr) {
+            try {
+                const [timePart, ampm] = timeStr.split(' ');
+                let [hours, mins] = timePart.split(':').map(Number);
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+                
+                const d = new Date();
+                d.setHours(hours, mins + 20);
+                
+                let h = d.getHours();
+                let m = d.getMinutes();
+                const newAmpm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12 || 12;
+                return `${h}:${m.toString().padStart(2, '0')} ${newAmpm}`;
+            } catch(e) {
+                return timeStr;
+            }
+        }
+
+        // --- Init & Load Data ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadCompletedAppointments();
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        async function loadCompletedAppointments() {
+            showLoader();
+            try {
+                // Fetch "Completed" appointments for this doctor
+                const q = query(
+                    collection(db, "appointments"), 
+                    where("doctorId", "==", currentUser.uid),
+                    where("status", "==", "Completed")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                let appointments = [];
+
+                querySnapshot.forEach((doc) => {
+                    appointments.push({ id: doc.id, ...doc.data() });
+                });
+
+                // New to Old Sort (Descending by Appointment Timestamp)
+                appointments.sort((a, b) => {
+                    const timeA = getApptTimestamp(a.date, a.time);
+                    const timeB = getApptTimestamp(b.date, b.time);
+                    return timeB - timeA; // Descending
+                });
+
+                // Pre-fetch patient details
+                for (let i = 0; i < appointments.length; i++) {
+                    const appt = appointments[i];
+                    let patientName = "Unknown Patient";
+                    let profileImage = null;
+
+                    if (appt.patientId) {
+                        const patientSnap = await getDoc(doc(db, "users", appt.patientId));
+                        if (patientSnap.exists()) {
+                            patientName = patientSnap.data().name || "Unknown Patient";
+                            profileImage = patientSnap.data().profileImageUrl || null;
+                        }
+                    }
+
+                    const shortId = `PT-${appt.id.substring(0, 4).toUpperCase()}`;
+                    
+                    appt._patientName = patientName;
+                    appt._shortId = shortId;
+                    appt._profileImage = profileImage;
+                    appt._timestamp = getApptTimestamp(appt.date, appt.time);
+                }
+
+                allCompletedAppointments = appointments;
+                renderCards(allCompletedAppointments);
+
+            } catch (error) {
+                console.error("Error loading completed appointments:", error);
+                showToast("Error loading data", "error");
+            }
+            hideLoader();
+        }
+
+        function renderCards(appointmentsToRender) {
+            const container = document.getElementById('patient-list');
+            container.innerHTML = '';
+
+            if (appointmentsToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-20 opacity-60">
+                        <i class="fa-solid fa-clipboard-check text-6xl mb-4 text-emerald-500/50"></i>
+                        <h3 class="text-xl font-bold text-gray-400">No Completed Consultations</h3>
+                        <p class="text-sm text-gray-500 mt-2">You haven't completed any appointments based on this filter.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            appointmentsToRender.forEach((appt) => {
+                const displayDate = getDisplayDateString(appt.date);
+                const isOnline = (appt.type === "Online" || appt.type === "Online Video");
+                const typeIcon = isOnline ? "fa-video" : "fa-hospital-user";
+                const typeLabel = isOnline ? "Online" : "In-Person";
+                
+                const typeClasses = isOnline 
+                    ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" 
+                    : "bg-blue-500/10 text-blue-400 border-blue-500/20";
+
+                const finishedTime = getFinishedTime(appt.time);
+                const initials = getInitials(appt._patientName);
+
+                // Avatar Logic (Image or Initials)
+                const avatarHtml = appt._profileImage 
+                    ? `<img src="${appt._profileImage}" alt="Avatar" class="w-full h-full object-cover rounded-full">`
+                    : `<div class="w-full h-full flex items-center justify-center text-white font-bold text-lg">${initials}</div>`;
+
+                const card = document.createElement('div');
+                card.className = `patient-row flex flex-col lg:flex-row items-start lg:items-center gap-4 p-4 glass-card rounded-2xl border-l-[5px] border-gray-600 hover:bg-white/[0.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] transition-all group`;
+                card.dataset.name = appt._patientName.toLowerCase();
+                card.dataset.id = appt._shortId.toLowerCase();
+                card.dataset.timestamp = appt._timestamp;
+                
+                card.innerHTML = `
+                    <!-- Schedule Info -->
+                    <div class="flex flex-col gap-1 shrink-0 lg:w-[270px]">
+                        <div class="flex items-center gap-2 text-gray-300 font-bold text-sm tracking-wide whitespace-nowrap">
+                            <i class="fa-regular fa-calendar text-gray-500"></i>
+                            <span>${displayDate}</span>
+                            <span class="text-gray-600 font-normal">|</span>
+                            <i class="fa-regular fa-clock text-gray-500"></i>
+                            <span>${appt.time}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs text-emerald-500 font-medium pl-0.5 whitespace-nowrap">
+                            <i class="fa-solid fa-check-double"></i>
+                            <span>Finished at: ${finishedTime}</span>
+                        </div>
+                    </div>
+
+                    <!-- Patient Info -->
+                    <div class="flex items-center gap-4 shrink-0 flex-1 w-full">
+                        <div class="w-12 h-12 rounded-full border-2 border-gray-500/30 bg-[#334155] shadow-md shrink-0">
+                            ${avatarHtml}
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-gray-400 group-hover:text-emerald-400 transition-colors leading-tight">${appt._patientName}</h3>
+                            <div class="flex flex-wrap items-center gap-2 mt-1">
+                                <p class="text-[11px] font-bold text-gray-400">Appointment ID: ${appt._shortId}</p>
+                                <span class="${typeClasses} px-1.5 py-0.5 rounded text-[9px] font-bold border whitespace-nowrap"><i class="fa-solid ${typeIcon} mr-1"></i> ${typeLabel}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions (Right) -->
+                    <div class="flex flex-col gap-2.5 shrink-0 lg:w-[220px] w-full">
+                        <button onclick="window.location.href='consultation.html?id=${appt.id}'" class="w-full bg-[#0f172a]/50 hover:bg-white/10 text-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fa-regular fa-file-lines text-sm"></i> View Prescription
+                        </button>
+                        <button onclick="window.location.href='patient-profile.html?id=${appt.patientId}'" class="w-full bg-[#0f172a]/50 hover:bg-white/10 text-gray-400 hover:text-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fa-regular fa-folder-open text-sm"></i> Patient History
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- Filtering Logic ---
+        function applyFilters() {
+            const queryText = document.getElementById('search-input').value.toLowerCase().trim();
+            const dateFilter = document.getElementById('date-filter').value;
+            
+            const filtered = allCompletedAppointments.filter(appt => {
+                // 1. Search Filter
+                const matchesSearch = appt._patientName.toLowerCase().includes(queryText) || appt._shortId.toLowerCase().includes(queryText);
+                if (!matchesSearch) return false;
+
+                // 2. Date Filter
+                if (dateFilter === 'all') return true;
+
+                const apptDateObj = new Date(appt._timestamp);
+                const t = new Date();
+                
+                if (dateFilter === 'today') {
+                    return apptDateObj.toDateString() === t.toDateString();
+                } 
+                else if (dateFilter === 'yesterday') {
+                    const y = new Date(t);
+                    y.setDate(y.getDate() - 1);
+                    return apptDateObj.toDateString() === y.toDateString();
+                } 
+                else if (dateFilter === '7days') {
+                    const sevenDaysAgo = new Date(t);
+                    sevenDaysAgo.setDate(t.getDate() - 7);
+                    return apptDateObj >= sevenDaysAgo;
+                } 
+                else if (dateFilter === 'month') {
+                    return apptDateObj.getMonth() === t.getMonth() && apptDateObj.getFullYear() === t.getFullYear();
+                }
+                return true;
+            });
+
+            renderCards(filtered);
+        }
+
+        // Event Listeners for Filters
+        document.getElementById('search-input').addEventListener('input', applyFilters);
+        document.getElementById('date-filter').addEventListener('change', applyFilters);
+
+    </script>
+</body>
+</html>

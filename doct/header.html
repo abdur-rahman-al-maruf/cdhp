@@ -1,0 +1,117 @@
+<nav class="fixed top-0 left-0 w-full z-50 bg-teal-800 shadow-md border-b border-teal-700/50 h-[70px] flex items-center transition-all duration-300 font-['Roboto']">
+    <div class="w-full max-w-[1400px] mx-auto px-4 lg:px-6 flex justify-between items-center h-full relative">
+        
+        <div class="flex items-center gap-2 lg:gap-4 shrink w-[60%] sm:w-auto min-w-0 z-[101]">
+            <button id="mobile-menu-btn" class="lg:hidden text-white hover:bg-white/10 p-2 rounded-lg transition-colors focus:outline-none">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            
+            <a href="DoctorDashboard.html" class="flex items-center gap-2 lg:gap-3 font-bold text-[0.85rem] sm:text-[0.95rem] xl:text-[1.1rem] leading-[1.2] text-white hover:opacity-90 transition-opacity min-w-0 w-full">
+                <div class="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] rounded-full shrink-0 overflow-hidden transform hover:scale-105 transition-transform duration-300 shadow-md bg-white flex items-center justify-center text-teal-800">
+                    <img src="../img/CDHP_Logo.png" alt="CDHP Logo" class="w-full h-full object-cover rounded-full" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fa-solid fa-user-doctor\'></i>';">
+                </div>
+                <div class="flex flex-col justify-center overflow-hidden">
+                    <span class="whitespace-nowrap truncate tracking-wide w-full">Centralized Digital Healthcare Platform</span>
+                </div>
+            </a>
+        </div>
+
+        <div id="header-nav" class="absolute top-[70px] left-0 w-full bg-teal-800 shadow-xl lg:shadow-none lg:static lg:flex lg:flex-1 lg:justify-center lg:px-2 lg:w-auto lg:bg-transparent transition-all duration-300 ease-in-out max-h-0 lg:max-h-full overflow-hidden lg:overflow-visible z-40">
+            <ul class="flex flex-col lg:flex-row items-start lg:items-center gap-2 lg:gap-4 xl:gap-8 m-0 p-4 lg:p-0 list-none w-full lg:w-auto">
+                <li class="w-full lg:w-auto">
+                    <a href="DoctorDashboard.html" class="nav-link group relative flex items-center gap-2 text-white/80 hover:text-white text-[0.95rem] xl:text-[1rem] font-medium px-4 py-3 lg:px-2 xl:px-3 lg:py-2 rounded-lg hover:bg-white/10 hover:-translate-y-[2px] transition-all duration-300 w-full">
+                        <i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard
+                        <span class="underline-anim hidden lg:block absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-teal-300 rounded-t-sm transition-all duration-300 group-hover:w-[70%] opacity-0 group-hover:opacity-100"></span>
+                    </a>
+                </li>
+                <li class="w-full lg:w-auto">
+                    <a href="AppointmentManagement.html" class="nav-link group relative flex items-center gap-2 text-white/80 hover:text-white text-[0.95rem] xl:text-[1rem] font-medium px-4 py-3 lg:px-2 xl:px-3 lg:py-2 rounded-lg hover:bg-white/10 hover:-translate-y-[2px] transition-all duration-300 w-full">
+                        <i class="fa-regular fa-calendar-check w-5 text-center"></i> Appointments
+                        <span class="underline-anim hidden lg:block absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-teal-300 rounded-t-sm transition-all duration-300 group-hover:w-[70%] opacity-0 group-hover:opacity-100"></span>
+                    </a>
+                </li>
+                <li class="w-full lg:w-auto">
+                    <a href="todays-schedule.html" class="nav-link group relative flex items-center gap-2 text-white/80 hover:text-white text-[0.95rem] xl:text-[1rem] font-medium px-4 py-3 lg:px-2 xl:px-3 lg:py-2 rounded-lg hover:bg-white/10 hover:-translate-y-[2px] transition-all duration-300 w-full">
+                        <i class="fa-regular fa-calendar-day w-5 text-center"></i> Today's Schedule
+                        <span class="underline-anim hidden lg:block absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-teal-300 rounded-t-sm transition-all duration-300 group-hover:w-[70%] opacity-0 group-hover:opacity-100"></span>
+                    </a>
+                </li>
+                <li class="w-full lg:w-auto">
+                    <a href="new-registrations.html" class="nav-link group relative flex items-center gap-2 text-white/80 hover:text-white text-[0.95rem] xl:text-[1rem] font-medium px-4 py-3 lg:px-2 xl:px-3 lg:py-2 rounded-lg hover:bg-white/10 hover:-translate-y-[2px] transition-all duration-300 w-full">
+                        <i class="fa-solid fa-user-plus w-5 text-center"></i> New Registrations
+                        <span class="underline-anim hidden lg:block absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-teal-300 rounded-t-sm transition-all duration-300 group-hover:w-[70%] opacity-0 group-hover:opacity-100"></span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="flex items-center gap-3 md:gap-4 z-[101] flex-shrink-0">
+            
+            <!-- Notification Dropdown Menu -->
+            <div class="relative">
+                <button id="notification-btn" class="relative w-10 h-10 rounded-full text-white/90 hover:bg-white/10 transition-colors flex items-center justify-center focus:outline-none">
+                    <i class="fa-regular fa-bell text-[1.1rem]"></i>
+                    <span id="notification-badge" class="hidden absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-teal-800"></span>
+                </button>
+                
+                <div id="notification-menu" class="absolute right-[-60px] sm:right-[-12px] mt-2 w-[320px] sm:w-80 bg-[#0f172a] rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.6)] border border-slate-700 py-1.5 transition-all duration-200 invisible opacity-0 translate-y-2 z-50 text-slate-200 font-sans transform origin-top-right backdrop-blur-xl">
+                    <div class="px-4 py-3 border-b border-slate-700/80 flex justify-between items-center bg-gradient-to-b from-slate-800/40 to-transparent rounded-t-2xl">
+                        <h3 class="font-bold text-white text-[0.95rem]">Notifications</h3>
+                        <button id="mark-all-read-btn" class="text-[0.7rem] font-medium text-teal-400 hover:text-teal-300 transition-colors bg-teal-500/10 px-2 py-1 rounded">Mark all read</button>
+                    </div>
+                    <div id="notification-list" class="max-h-80 overflow-y-auto" style="scrollbar-width: thin; scrollbar-color: #334155 transparent;">
+                        <div class="p-5 text-center text-sm text-slate-400">Loading notifications...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Dropdown Menu -->
+            <div class="relative">
+                <button id="profile-btn" class="flex items-center focus:outline-none transition-transform hover:scale-105">
+                    <img id="header-profile-img" class="w-9 h-9 rounded-full object-cover border-2 border-white/30 bg-teal-100 shadow-sm" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Profile">
+                </button>
+
+                <div id="profile-menu" class="absolute right-[-12px] mt-2 w-56 bg-[#0f172a] rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.6)] border border-slate-700 py-1.5 transition-all duration-200 invisible opacity-0 translate-y-2 z-50 text-slate-200 font-sans transform origin-top-right backdrop-blur-xl">
+                    
+                    <div class="px-4 py-3.5 border-b border-slate-700/80 mb-1 flex flex-col items-center justify-center bg-gradient-to-b from-slate-800/40 to-transparent rounded-t-2xl">
+                        <p class="text-[1rem] font-bold text-white leading-tight text-center" id="userNameDisplay">Loading...</p>
+                        <div class="mt-2">
+                            <span class="text-[0.65rem] font-bold text-teal-300 bg-teal-500/10 border border-teal-500/30 inline-block px-2.5 py-0.5 rounded-md uppercase tracking-wide text-center" id="userIdDisplay">Portal: ...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="px-2 space-y-1 py-1">
+                        <a href="doctor-profile.html" class="flex items-center px-3 py-2 text-[0.85rem] font-medium text-slate-300 hover:bg-white/5 hover:text-teal-400 rounded-xl transition-all duration-200 group">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800/80 border border-slate-700/50 group-hover:bg-slate-800 group-hover:border-teal-500/30 group-hover:shadow-[0_0_12px_rgba(20,184,166,0.15)] flex items-center justify-center mr-3 transition-all duration-200">
+                                <i class="fa-solid fa-user-doctor text-slate-400 group-hover:text-teal-400"></i>
+                            </div>
+                            Doctor Profile
+                        </a>
+                        <a href="settings.html" class="flex items-center px-3 py-2 text-[0.85rem] font-medium text-slate-300 hover:bg-white/5 hover:text-teal-400 rounded-xl transition-all duration-200 group">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800/80 border border-slate-700/50 group-hover:bg-slate-800 group-hover:border-teal-500/30 group-hover:shadow-[0_0_12px_rgba(20,184,166,0.15)] flex items-center justify-center mr-3 transition-all duration-200">
+                                <i class="fa-solid fa-gear text-slate-400 group-hover:text-teal-400"></i>
+                            </div>
+                            Settings 
+                        </a>
+                        <a href="support.html" class="flex items-center px-3 py-2 text-[0.85rem] font-medium text-slate-300 hover:bg-white/5 hover:text-teal-400 rounded-xl transition-all duration-200 group">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800/80 border border-slate-700/50 group-hover:bg-slate-800 group-hover:border-teal-500/30 group-hover:shadow-[0_0_12px_rgba(20,184,166,0.15)] flex items-center justify-center mr-3 transition-all duration-200">
+                                <i class="fa-regular fa-circle-question text-slate-400 group-hover:text-teal-400"></i>
+                            </div>
+                            Help / Support
+                        </a>
+                    </div>
+                    
+                    <div class="border-t border-slate-700/80 mt-1 pt-2 px-2 pb-1">
+                        <a href="#" id="signOutBtn" class="flex items-center px-3 py-2 text-[0.85rem] font-medium text-red-400 hover:bg-red-500/10 rounded-xl transition-all duration-200 group">
+                            <div class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 group-hover:bg-red-500/20 flex items-center justify-center mr-3 transition-all duration-200">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-red-400"></i>
+                            </div>
+                            Sign Out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</nav>

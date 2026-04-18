@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Management</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',
+                            accent: '#6366f1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .text-gray-400 { color: #cbd5e1 !important; }
+        .text-gray-500 { color: #94a3b8 !important; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* General Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* Calendar Grid styles */
+        .calendar-cell {
+            min-height: 100px;
+            transition: all 0.2s ease;
+        }
+        .calendar-cell:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(20, 184, 166, 0.5);
+            cursor: pointer;
+        }
+        .calendar-cell.active {
+            background: rgba(20, 184, 166, 0.1);
+            border-color: #14b8a6;
+        }
+        
+        /* Tooltip style */
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            margin-bottom: 5px;
+            z-index: 50;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Toast Animation */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-enter {
+            animation: slideInRight 0.3s ease-out forwards;
+        }
+        
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #14b8a6; }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-brand-secondary selection:text-white pt-[70px]">
+
+    <div id="header-placeholder" data-header="header.html"></div>
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+
+    <div class="flex h-[calc(100vh-70px)] w-full overflow-hidden relative">
+
+        <main class="flex-1 overflow-y-auto p-4 pt-4 lg:p-8 lg:pt-6 relative z-10 w-full" id="appointments-container">
+            
+            <div class="absolute top-0 right-1/4 w-96 h-96 bg-brand-primary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+            <div class="absolute bottom-1/4 left-1/4 w-96 h-96 bg-brand-secondary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3 relative z-10">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+                        <i class="fa-regular fa-calendar-check text-brand-primary"></i> Appointment Management
+                    </h1>
+                    <p class="text-sm text-gray-400 mt-1 max-w-2xl truncate">
+                        Manage and track your daily patient appointments efficiently.
+                    </p>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-4 mb-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10 border-l-4 border-brand-primary">
+                
+                <div class="flex bg-[#020617] border border-white/10 rounded-lg p-1">
+                    <button id="btn-list-view" class="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-primary shadow-lg transition-all flex items-center gap-2" onclick="switchView('list')">
+                        <i class="fa-solid fa-list-ul"></i> List View
+                    </button>
+                    <button id="btn-calendar-view" class="px-4 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white transition-all flex items-center gap-2" onclick="switchView('calendar')">
+                        <i class="fa-solid fa-calendar-days"></i> Calendar View
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap gap-3 w-full lg:w-auto">
+                    <div class="relative flex-1 lg:flex-none">
+                        <i class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <select id="filter-date" class="w-full lg:w-auto bg-[#0a101f] border border-white/10 text-white text-sm rounded-lg pl-9 pr-8 py-2 focus:border-brand-primary outline-none appearance-none cursor-pointer">
+                            <option value="all">All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="tomorrow">Tomorrow</option>
+                            <option value="next7">Next 7 Days</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
+                    </div>
+                    
+                    <div class="relative flex-1 lg:flex-none">
+                        <i class="fa-solid fa-filter absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <select id="filter-status" class="w-full lg:w-auto bg-[#0a101f] border border-white/10 text-white text-sm rounded-lg pl-9 pr-8 py-2 focus:border-brand-primary outline-none appearance-none cursor-pointer">
+                            <option value="all">All Status</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
+                    </div>
+
+                    <div class="relative flex-1 lg:flex-none">
+                        <select id="filter-sort" class="w-full lg:w-auto bg-[#0a101f] border border-white/10 text-white text-sm rounded-lg pl-4 pr-8 py-2 focus:border-brand-primary outline-none appearance-none cursor-pointer">
+                            <option value="newest">Sort By: Newest</option>
+                            <option value="oldest">Sort By: Oldest</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col xl:flex-row gap-6 relative z-10 pb-10">
+                
+                <div class="flex-1 overflow-hidden flex flex-col gap-6">
+                    
+                    <div id="list-view-container" class="glass-card rounded-2xl overflow-hidden block">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead>
+                                    <tr class="bg-white/5 text-gray-300 text-sm border-b border-white/10">
+                                        <th class="py-4 px-6 font-semibold">Time & Date</th>
+                                        <th class="py-4 px-6 font-semibold">Patient Info</th>
+                                        <th class="py-4 px-6 font-semibold">Type</th>
+                                        <th class="py-4 px-6 font-semibold">Status</th>
+                                        <th class="py-4 px-6 font-semibold text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="list-tbody" class="text-sm divide-y divide-white/5">
+                                    </tbody>
+                            </table>
+                        </div>
+                        <div id="list-empty-state" class="hidden flex-col items-center justify-center py-12 opacity-60">
+                            <i class="fa-regular fa-folder-open text-4xl mb-3 text-gray-500"></i>
+                            <p class="text-gray-400">No appointments found matching your filters.</p>
+                        </div>
+                    </div>
+
+                    <div id="calendar-view-container" class="glass-card rounded-2xl overflow-hidden hidden flex-1 flex-col">
+                        
+                        <div class="flex justify-between items-center p-4 border-b border-white/5 bg-[#0a101f]">
+                            <h2 id="calendar-month-year" class="text-lg font-bold text-white">Month 2026</h2>
+                            <div class="flex gap-2">
+                                <button onclick="changeMonth(-1)" class="w-8 h-8 rounded-md bg-white/5 hover:bg-white/10 text-white flex items-center justify-center border border-white/10 transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
+                                <button onclick="resetToTodayMonth()" class="px-3 h-8 rounded-md bg-white/5 hover:bg-white/10 text-white flex items-center justify-center text-xs font-medium border border-white/10 transition-colors">Today</button>
+                                <button onclick="changeMonth(1)" class="w-8 h-8 rounded-md bg-white/5 hover:bg-white/10 text-white flex items-center justify-center border border-white/10 transition-colors"><i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-7 bg-white/5 text-center text-xs font-medium text-gray-400 py-3 border-b border-white/5">
+                            <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+                        </div>
+                        <div id="calendar-days-grid" class="grid grid-cols-7 flex-1 bg-[#020617] overflow-y-auto">
+                            </div>
+                    </div>
+                </div>
+
+                <aside class="w-full xl:w-80 shrink-0 flex flex-col gap-6">
+                    
+                    <div class="glass-card rounded-2xl p-6 border-t-2 border-brand-secondary relative overflow-hidden">
+                        <div class="absolute -right-10 -top-10 w-32 h-32 bg-brand-secondary/10 rounded-full blur-2xl pointer-events-none"></div>
+                        
+                        <div class="flex justify-between items-center mb-6 relative z-10">
+                            <h2 class="text-lg font-bold text-white">Day Overview</h2>
+                            <span id="overview-today-date" class="text-xs bg-white/10 px-2 py-1 rounded text-gray-300">Today</span>
+                        </div>
+
+                        <div class="space-y-4 relative z-10">
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-users"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400 font-medium">Total Today</p>
+                                        <p id="stat-total" class="text-lg font-bold text-white">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-hourglass-half"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400 font-medium">Pending</p>
+                                        <p id="stat-pending" class="text-lg font-bold text-white">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-check-double"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400 font-medium">Approved</p>
+                                        <p id="stat-approved" class="text-lg font-bold text-white">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-clipboard-check"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400 font-medium">Completed</p>
+                                        <p id="stat-completed" class="text-lg font-bold text-white">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-ban"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400 font-medium">Cancelled</p>
+                                        <p id="stat-cancelled" class="text-lg font-bold text-white">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </aside>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="cancel-modal" class="fixed inset-0 z-[60] bg-[#020617]/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity opacity-0 duration-300">
+        <div class="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl shadow-red-500/10 transform scale-95 transition-transform duration-300 p-6 flex flex-col items-center text-center">
+            <div class="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center text-3xl mb-4">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Cancel Appointment?</h3>
+            <p class="text-sm text-gray-400 mb-6">Are you sure you want to cancel this appointment? This action cannot be undone.</p>
+            
+            <div class="flex gap-3 w-full">
+                <button onclick="closeModal('cancel-modal')" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                    Keep It
+                </button>
+                <button onclick="confirmCancelAction()" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all">
+                    Yes, Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reschedule-modal" class="fixed inset-0 z-[60] bg-[#020617]/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity opacity-0 duration-300">
+        <div class="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl shadow-brand-primary/10 transform scale-95 transition-transform duration-300 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-regular fa-calendar-plus text-brand-primary"></i> Reschedule
+                </h3>
+                <button onclick="closeModal('reschedule-modal')" class="text-gray-500 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">New Date</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="date" id="reschedule-date" class="w-full bg-[#020617] border border-white/10 text-white text-sm rounded-lg pl-9 pr-4 py-2.5 focus:border-brand-primary outline-none focus:ring-1 focus:ring-brand-primary/50 transition-all [color-scheme:dark]">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">New Time</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="time" id="reschedule-time" class="w-full bg-[#020617] border border-white/10 text-white text-sm rounded-lg pl-9 pr-4 py-2.5 focus:border-brand-primary outline-none focus:ring-1 focus:ring-brand-primary/50 transition-all [color-scheme:dark]">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="closeModal('reschedule-modal')" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-gray-300 bg-transparent hover:bg-white/5 border border-transparent transition-colors">
+                    Discard
+                </button>
+                <button onclick="submitRescheduleAction()" class="flex-[2] py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-brand-primary hover:bg-sky-400 shadow-lg shadow-brand-primary/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check"></i> Confirm Reschedule
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[70] flex flex-col gap-3 pointer-events-none"></div>
+
+    <script src="load.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- State Variables ---
+        let currentUser = null;
+        let allAppointments = []; // Holds all fetched appointments
+        let patientCache = {}; // Prevents duplicate reads for same patient
+        
+        let currentModalApptId = null; // Stores ID for modal actions
+        
+        // Calendar State
+        let calendarDate = new Date();
+
+        // UI Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        // --- Init ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // Set initial overview date text
+                const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                document.getElementById('overview-today-date').textContent = `Today, ${todayStr}`;
+                
+                await fetchAllAppointments();
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        // --- Fetch Data ---
+        async function fetchAllAppointments() {
+            showLoader();
+            try {
+                const q = query(
+                    collection(db, "appointments"), 
+                    where("doctorId", "==", currentUser.uid)
+                );
+                const querySnapshot = await getDocs(q);
+                
+                let rawAppointments = [];
+                querySnapshot.forEach((doc) => {
+                    rawAppointments.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Fetch Patient Details for all (using cache)
+                for (let i = 0; i < rawAppointments.length; i++) {
+                    const appt = rawAppointments[i];
+                    if (appt.patientId) {
+                        if (!patientCache[appt.patientId]) {
+                            const pSnap = await getDoc(doc(db, "users", appt.patientId));
+                            if (pSnap.exists()) {
+                                patientCache[appt.patientId] = pSnap.data();
+                            }
+                        }
+                        
+                        const pData = patientCache[appt.patientId] || {};
+                        appt._patientName = pData.name || "Unknown Patient";
+                        
+                        // Handle generic UI Avatar fallback if no image
+                        if(pData.profileImageUrl){
+                            appt._patientAvatar = pData.profileImageUrl;
+                        } else {
+                            // Assign a background color based on status for generic avatar to look nice
+                            let bg = "6366f1"; // default indigo
+                            if(appt.status === "Approved") bg = "10b981";
+                            else if(appt.status === "Pending") bg = "eab308";
+                            else if(appt.status === "Cancelled") bg = "ef4444";
+                            else if(appt.status === "Completed") bg = "0ea5e9";
+                            appt._patientAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(appt._patientName)}&background=${bg}&color=fff`;
+                        }
+                    } else {
+                        appt._patientName = "Unknown Patient";
+                        appt._patientAvatar = `https://ui-avatars.com/api/?name=Unknown&background=6366f1&color=fff`;
+                    }
+                    
+                    // Pre-calculate timestamp for sorting
+                    appt._timestamp = getApptTimestamp(appt.date, appt.time);
+                    appt._shortId = `PT-${appt.id.substring(0, 4).toUpperCase()}`;
+                }
+
+                allAppointments = rawAppointments;
+                
+                // Once data is loaded, apply default filters and render
+                applyFilters();
+                updateDayOverview();
+                renderCalendar();
+
+            } catch (error) {
+                console.error("Error fetching appointments:", error);
+                window.showToast("Failed to load appointments", "error");
+            }
+            hideLoader();
+        }
+
+        // --- Helpers ---
+        function getApptTimestamp(dateStr, timeStr) {
+            if (!dateStr) return 0;
+            try {
+                let hours = 0, mins = 0;
+                if(timeStr) {
+                    const [timePart, ampm] = timeStr.split(' ');
+                    [hours, mins] = timePart.split(':').map(Number);
+                    if (ampm === 'PM' && hours < 12) hours += 12;
+                    if (ampm === 'AM' && hours === 12) hours = 0;
+                }
+                const [y, m, d] = dateStr.split('-').map(Number);
+                return new Date(y, m - 1, d, hours, mins).getTime();
+            } catch(e) {
+                return 0;
+            }
+        }
+
+        function getTodayDateString(offsetDays = 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // Format HH:MM 24h to 12h AM/PM
+        function formatTime12h(time24) {
+            let [h, m] = time24.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+
+        // Generate short day (Mon, Tue) from YYYY-MM-DD
+        function getDayOfWeek(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const dateObj = new Date(y, m - 1, d);
+            return dateObj.toLocaleDateString('en-US', { weekday: 'short' }); 
+        }
+
+        // --- Filter Logic ---
+        function applyFilters() {
+            const dateFilter = document.getElementById('filter-date').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const sortFilter = document.getElementById('filter-sort').value;
+            
+            const todayStr = getTodayDateString();
+            const tomorrowStr = getTodayDateString(1);
+            const todayObj = new Date();
+            const next7DaysObj = new Date();
+            next7DaysObj.setDate(todayObj.getDate() + 7);
+
+            let filtered = allAppointments.filter(appt => {
+                // 1. Status Filter
+                if (statusFilter !== 'all' && appt.status !== statusFilter) return false;
+
+                // 2. Date Filter
+                if (dateFilter === 'today' && appt.date !== todayStr) return false;
+                if (dateFilter === 'tomorrow' && appt.date !== tomorrowStr) return false;
+                if (dateFilter === 'next7') {
+                    const apptDateObj = new Date(appt.date);
+                    if (apptDateObj < todayObj.setHours(0,0,0,0) || apptDateObj > next7DaysObj) return false;
+                }
+                
+                return true;
+            });
+
+            // 3. Sort
+            filtered.sort((a, b) => {
+                if (sortFilter === 'newest') return b._timestamp - a._timestamp; // Descending
+                if (sortFilter === 'oldest') return a._timestamp - b._timestamp; // Ascending
+                return 0;
+            });
+
+            renderList(filtered);
+        }
+
+        // Listeners for filters
+        document.getElementById('filter-date').addEventListener('change', applyFilters);
+        document.getElementById('filter-status').addEventListener('change', applyFilters);
+        document.getElementById('filter-sort').addEventListener('change', applyFilters);
+
+
+        // --- Render List View ---
+        function renderList(appointmentsToRender) {
+            const tbody = document.getElementById('list-tbody');
+            const emptyState = document.getElementById('list-empty-state');
+            tbody.innerHTML = '';
+
+            if (appointmentsToRender.length === 0) {
+                tbody.parentElement.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            tbody.parentElement.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            appointmentsToRender.forEach(appt => {
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-white/[0.02] transition-colors ${appt.status === 'Cancelled' ? 'opacity-70 bg-red-500/5 hover:bg-red-500/10' : ''}`;
+                
+                // Format Status
+                let statusBadge = "";
+                if(appt.status === 'Approved') statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Approved</span>`;
+                else if(appt.status === 'Pending') statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Pending</span>`;
+                else if(appt.status === 'Completed') statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span> Completed</span>`;
+                else if(appt.status === 'Cancelled') statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Cancelled</span>`;
+
+                // Format Type
+                const isOnline = appt.type === "Online" || appt.type === "Online Video";
+                const typeBadge = isOnline 
+                    ? `<span class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-xs border border-blue-500/20 whitespace-nowrap"><i class="fa-solid fa-video mr-1"></i> Online</span>`
+                    : `<span class="bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full text-xs border border-indigo-500/20 whitespace-nowrap"><i class="fa-solid fa-hospital-user mr-1"></i> In-Person</span>`;
+
+                // Actions 
+                let actionBtns = '';
+                if(appt.status !== 'Cancelled' && appt.status !== 'Completed') {
+                    actionBtns = `
+                        <button class="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500 hover:text-white transition-colors" data-tooltip="Reschedule" onclick="window.initReschedule('${appt.id}')">
+                            <i class="fa-regular fa-calendar-plus"></i>
+                        </button>
+                        <button class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-colors" data-tooltip="Cancel" onclick="window.initCancel('${appt.id}')">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-4 px-6 whitespace-nowrap ${appt.status === 'Cancelled' ? 'line-through text-gray-500' : ''}">
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex items-center gap-2 ${appt.status === 'Cancelled' ? 'text-gray-500' : 'text-white'} font-normal text-base">
+                                <i class="fa-regular fa-calendar text-gray-400"></i>
+                                <span>${appt.date} (${appt.day || ''})</span>
+                                <span class="text-gray-500 font-normal">|</span>
+                                <i class="fa-regular fa-clock text-gray-400"></i>
+                                <span>${appt.time}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="flex items-center gap-3">
+                            <img src="${appt._patientAvatar}" alt="Avatar" class="w-10 h-10 rounded-full shadow-md ${appt.status === 'Cancelled' ? 'grayscale opacity-50' : ''}">
+                            <div>
+                                <p class="font-bold ${appt.status === 'Cancelled' ? 'text-gray-400' : 'text-white'} text-base">${appt._patientName}</p>
+                                <p class="text-xs text-gray-500 font-medium">ID: ${appt._shortId}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
+                        ${typeBadge}
+                    </td>
+                    <td class="py-4 px-6">
+                        ${statusBadge}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <div class="flex items-center justify-center gap-2 relative">
+                            <button class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-colors" data-tooltip="View Details" onclick="window.location.href='appointment-details.html?id=${appt.id}'">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                            ${actionBtns}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Render Day Overview ---
+        function updateDayOverview() {
+            const todayStr = getTodayDateString();
+            
+            let total = 0, pending = 0, approved = 0, completed = 0, cancelled = 0;
+
+            allAppointments.forEach(appt => {
+                if (appt.date === todayStr) {
+                    total++;
+                    if (appt.status === 'Pending') pending++;
+                    else if (appt.status === 'Approved') approved++;
+                    else if (appt.status === 'Completed') completed++;
+                    else if (appt.status === 'Cancelled') cancelled++;
+                }
+            });
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-approved').textContent = approved;
+            document.getElementById('stat-completed').textContent = completed;
+            document.getElementById('stat-cancelled').textContent = cancelled;
+        }
+
+        // --- Render Calendar View ---
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-days-grid');
+            const monthYearTitle = document.getElementById('calendar-month-year');
+            grid.innerHTML = '';
+
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            
+            // Format title
+            monthYearTitle.textContent = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            const firstDayIndex = new Date(year, month, 1).getDay(); // 0(Sun) to 6(Sat)
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const prevMonthDays = new Date(year, month, 0).getDate();
+
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+
+            // Padding previous month days
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const dayNum = prevMonthDays - i;
+                createCalendarCell(grid, dayNum, true);
+            }
+
+            // Current month days
+            for (let i = 1; i <= daysInMonth; i++) {
+                const isToday = isCurrentMonth && i === today.getDate();
+                
+                // Format YYYY-MM-DD to check against appointments
+                const cellDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                
+                // Find appointments for this day
+                const dayAppts = allAppointments.filter(a => a.date === cellDateStr && a.status !== 'Cancelled');
+
+                createCalendarCell(grid, i, false, isToday, dayAppts);
+            }
+        }
+
+        function createCalendarCell(container, dayNum, isOffset, isToday = false, appointments = []) {
+            const cell = document.createElement('div');
+            
+            let classes = 'calendar-cell border-b border-r border-white/5 p-2 relative ';
+            if (isOffset) classes += 'opacity-30 ';
+            if (isToday) classes += 'active ';
+
+            cell.className = classes;
+
+            // Day Number
+            let dayHtml = `<span class="text-gray-300 text-sm font-medium">${dayNum}</span>`;
+            if (isToday) {
+                dayHtml = `<span class="bg-brand-secondary text-[#020617] w-6 h-6 rounded-full inline-flex items-center justify-center text-sm font-bold shadow-md shadow-brand-secondary/30">${dayNum}</span>`;
+            }
+
+            // Dots for appointments
+            let dotsHtml = '';
+            if (!isOffset && appointments.length > 0) {
+                dotsHtml += '<div class="mt-2 flex flex-wrap gap-1">';
+                
+                // Max 5 dots to prevent overflow, then show +N
+                const maxDots = 5;
+                const renderCount = Math.min(appointments.length, maxDots);
+                
+                for(let i=0; i<renderCount; i++) {
+                    const st = appointments[i].status;
+                    let color = 'bg-brand-primary'; // default
+                    if(st === 'Approved' || st === 'Completed') color = 'bg-emerald-500';
+                    else if(st === 'Pending') color = 'bg-yellow-500';
+                    
+                    dotsHtml += `<div class="w-2 h-2 rounded-full ${color}" title="${st}"></div>`;
+                }
+
+                if (appointments.length > maxDots) {
+                    dotsHtml += `<span class="text-[10px] text-gray-400 ml-1 leading-none">+${appointments.length - maxDots}</span>`;
+                }
+
+                dotsHtml += '</div>';
+            }
+
+            cell.innerHTML = dayHtml + dotsHtml;
+            container.appendChild(cell);
+        }
+
+        // Calendar Navigation Methods
+        window.changeMonth = (dir) => {
+            calendarDate.setMonth(calendarDate.getMonth() + dir);
+            renderCalendar();
+        };
+        
+        window.resetToTodayMonth = () => {
+            calendarDate = new Date();
+            renderCalendar();
+        };
+
+        // --- Modals & Actions ---
+        window.initCancel = (apptId) => {
+            currentModalApptId = apptId;
+            openModal('cancel-modal');
+        };
+
+        window.confirmCancelAction = async () => {
+            if (!currentModalApptId) return;
+            showLoader();
+            closeModal('cancel-modal');
+            try {
+                await updateDoc(doc(db, "appointments", currentModalApptId), {
+                    status: "Cancelled"
+                });
+                window.showToast("Appointment cancelled successfully", "success");
+                await fetchAllAppointments(); // Refresh data
+            } catch (error) {
+                console.error("Error cancelling:", error);
+                window.showToast("Failed to cancel", "error");
+            }
+            hideLoader();
+        };
+
+        window.initReschedule = (apptId) => {
+            currentModalApptId = apptId;
+            // Optionally, pre-fill inputs here if needed
+            openModal('reschedule-modal');
+        };
+
+        window.submitRescheduleAction = async () => {
+            if (!currentModalApptId) return;
+            
+            const newDate = document.getElementById('reschedule-date').value;
+            const newTimeInput = document.getElementById('reschedule-time').value; // Example: "14:30"
+            
+            if(!newDate || !newTimeInput) {
+                window.showToast("Please select a new date and time", "error");
+                return;
+            }
+
+            showLoader();
+            closeModal('reschedule-modal');
+            try {
+                const formattedTime = formatTime12h(newTimeInput);
+                const newDay = getDayOfWeek(newDate);
+
+                await updateDoc(doc(db, "appointments", currentModalApptId), {
+                    date: newDate,
+                    day: newDay,
+                    time: formattedTime,
+                    // Keep status as is, or reset to pending/approved depending on business logic. We'll leave as is.
+                });
+                
+                window.showToast("Appointment rescheduled successfully", "success");
+                
+                // Clear modal inputs
+                document.getElementById('reschedule-date').value = '';
+                document.getElementById('reschedule-time').value = '';
+                
+                await fetchAllAppointments(); // Refresh data
+            } catch (error) {
+                console.error("Error rescheduling:", error);
+                window.showToast("Failed to reschedule", "error");
+            }
+            hideLoader();
+        };
+
+    </script>
+
+    <script>
+        // View Switcher Logic
+        function switchView(viewType) {
+            const listBtn = document.getElementById('btn-list-view');
+            const calBtn = document.getElementById('btn-calendar-view');
+            const listContainer = document.getElementById('list-view-container');
+            const calContainer = document.getElementById('calendar-view-container');
+
+            if (viewType === 'list') {
+                listBtn.className = 'px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-primary shadow-lg transition-all flex items-center gap-2';
+                calBtn.className = 'px-4 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white transition-all flex items-center gap-2';
+                
+                listContainer.classList.remove('hidden');
+                listContainer.classList.add('block');
+                calContainer.classList.add('hidden');
+                calContainer.classList.remove('flex');
+            } else {
+                calBtn.className = 'px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-primary shadow-lg transition-all flex items-center gap-2';
+                listBtn.className = 'px-4 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white transition-all flex items-center gap-2';
+                
+                calContainer.classList.remove('hidden');
+                calContainer.classList.add('flex');
+                listContainer.classList.add('hidden');
+                listContainer.classList.remove('block');
+            }
+        }
+
+        // Modal Logic
+        window.openModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('div');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        window.closeModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); 
+        }
+
+        // Toast Logic global assignment so module can use it
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast-enter glass-card px-4 py-3 rounded-lg border-l-4 shadow-xl flex items-center gap-3 min-w-[250px] ${
+                type === 'success' ? 'border-brand-secondary' : 
+                type === 'error' ? 'border-red-500' : 'border-brand-primary'
+            }`;
+            
+            const icon = type === 'success' ? '<i class="fa-solid fa-circle-check text-brand-secondary"></i>' : 
+                         type === 'error' ? '<i class="fa-solid fa-circle-xmark text-red-500"></i>' : 
+                         '<i class="fa-solid fa-circle-info text-brand-primary"></i>';
+
+            toast.innerHTML = `
+                ${icon}
+                <p class="text-sm font-medium text-white">${message}</p>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease-in';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

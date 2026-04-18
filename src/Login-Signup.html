@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Sign Up</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',
+                            accent: '#6366f1',
+                            navbg: '#164e63',
+                            navaccent: '#06b6d4'
+                        }
+                    },
+                    animation: {
+                        blob: "blob 7s infinite",
+                        float: "float 3s ease-in-out infinite",
+                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                    },
+                    keyframes: {
+                        blob: {
+                            "0%":   { transform: "translate(0px, 0px) scale(1)" },
+                            "33%":  { transform: "translate(30px, -50px) scale(1.1)" },
+                            "66%":  { transform: "translate(-20px, 20px) scale(0.9)" },
+                            "100%": { transform: "translate(0px, 0px) scale(1)" }
+                        },
+                        float: {
+                            "0%":   { transform: "translateY(0)" },
+                            "50%":  { transform: "translateY(-15px)" },
+                            "100%": { transform: "translateY(0)" }
+                        },
+                        fadeIn: {
+                            "0%":   { opacity: "0", transform: "scale(0.96) translateY(10px)" },
+                            "100%": { opacity: "1", transform: "scale(1) translateY(0)" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #2dd4bf, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            color: #f8fafc;
+            width: 100%;
+            border-radius: 0.75rem;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            font-size: 0.875rem;
+        }
+
+        .input-field::placeholder { color: #6b7280; }
+
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #14b8a6;
+            box-shadow: 0 0 15px rgba(20, 184, 166, 0.2);
+            outline: none;
+        }
+
+        .input-field.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+        }
+
+        .input-group:focus-within i.icon-left { color: #14b8a6; }
+
+        /* Autofill dark theme fix */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #0b1121 inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .hidden-form { display: none !important; }
+
+        /* Error messages */
+        .field-error {
+            color: #f87171;
+            font-size: 0.75rem;
+            margin-top: 4px;
+            display: none;
+        }
+        .field-error.show { display: block; }
+
+        /* Toast notification */
+        #toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #0f172a;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #f8fafc;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        #toast.success { border-color: #14b8a6; color: #2dd4bf; }
+        #toast.error   { border-color: #ef4444; color: #f87171; }
+
+        /* Animation delays */
+        .blob-delay-2 { animation-delay: 2s; }
+        .blob-delay-4 { animation-delay: 4s; }
+
+        /* Forgot password modal */
+        #forgotModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        #forgotModal.open { display: flex; }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center relative w-full selection:bg-brand-secondary selection:text-white py-8">
+
+    <!-- Animated Background Blobs -->
+    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-primary rounded-full mix-blend-screen filter blur-[120px] opacity-30 animate-blob"></div>
+    <div class="fixed bottom-[-10%] right-[-5%] w-[35%] h-[35%] bg-brand-secondary rounded-full mix-blend-screen filter blur-[120px] opacity-20 animate-blob blob-delay-2"></div>
+    <div class="fixed top-[20%] right-[20%] w-[25%] h-[25%] bg-brand-accent rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob blob-delay-4"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast"></div>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-6xl px-4 sm:px-6 relative z-10 flex justify-center">
+        <div class="glass-panel rounded-3xl w-full flex flex-col md:flex-row overflow-hidden max-w-5xl">
+
+            <!-- Left Branding Section -->
+            <div class="hidden md:flex md:w-5/12 p-10 flex-col justify-between relative overflow-hidden bg-gradient-to-br from-brand-navbg/40 to-transparent border-r border-white/5">
+                <div class="flex items-center gap-3 z-10 cursor-pointer" onclick="window.location.href='index.html'">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#0ea5e9] to-[#14b8a6] p-[2px] shrink-0 shadow-[0_0_15px_rgba(20,184,166,0.3)]">
+                        <div class="w-full h-full bg-[#020617] rounded-full overflow-hidden flex items-center justify-center">
+                            <img src="../img/CDHP_Logo.png" alt="CDHP Logo" class="w-full h-full object-cover"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                            <i class="fa-solid fa-heartbeat text-brand-secondary text-2xl" style="display:none;"></i>
+                        </div>
+                    </div>
+                    <span class="font-bold text-3xl tracking-wider text-white">CDHP</span>
+                </div>
+
+                <div class="z-10 mt-12 mb-12">
+                    <h1 class="text-4xl font-bold leading-tight mb-4">
+                        Welcome to <br>
+                        <span class="text-gradient">Healthcare Platform</span>
+                    </h1>
+                    <p class="text-gray-400 text-sm leading-relaxed max-w-sm">
+                        Access your centralized medical records, book appointments, and connect with doctors securely from anywhere in Bangladesh.
+                    </p>
+                </div>
+
+                <div class="z-10 flex items-center gap-4 text-xs text-gray-500">
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved text-brand-secondary"></i> Secure</span>
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-bolt text-brand-primary"></i> Fast</span>
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-cloud text-brand-accent"></i> Cloud</span>
+                </div>
+
+                <div class="absolute bottom-[-50px] right-[-50px] w-64 h-64 border border-dashed border-white/10 rounded-full animate-[spin_20s_linear_infinite]"></div>
+                <div class="absolute top-[30%] left-[-20px] w-32 h-32 border border-white/5 rounded-full animate-float"></div>
+            </div>
+
+            <!-- Right Forms Section -->
+            <div class="w-full md:w-7/12 p-8 sm:p-12 relative">
+
+                <!-- ===== LOGIN FORM ===== -->
+                <div id="loginForm" class="w-full max-w-md mx-auto animate-fade-in">
+
+                    <!-- Mobile Logo -->
+                    <div class="md:hidden flex items-center justify-center gap-3 mb-8">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#0ea5e9] to-[#14b8a6] p-[2px] shrink-0">
+                            <div class="w-full h-full bg-[#020617] rounded-full overflow-hidden flex items-center justify-center">
+                                <img src="../img/CDHP_Logo.png" alt="CDHP Logo" class="w-full h-full object-cover"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                <i class="fa-solid fa-heartbeat text-brand-secondary text-xl" style="display:none;"></i>
+                            </div>
+                        </div>
+                        <span class="font-bold text-2xl tracking-wider text-white">CDHP</span>
+                    </div>
+
+                    <div class="mb-8">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Sign In to CDHP</h2>
+                        <p class="text-gray-400 text-sm">Enter your credentials to access your portal.</p>
+                    </div>
+
+                    <form id="loginFormEl" onsubmit="handleLogin(event)" class="space-y-5" novalidate>
+                        <div class="input-group relative">
+                            <i class="fa-solid fa-envelope icon-left absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 transition-colors"></i>
+                            <input id="loginEmail" type="email" placeholder="Email Address"
+                                   class="input-field" autocomplete="email">
+                            <p id="loginEmailErr" class="field-error">Please enter a valid email address.</p>
+                        </div>
+
+                        <div class="input-group relative">
+                            <i class="fa-solid fa-lock icon-left absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 transition-colors"></i>
+                            <input id="loginPassword" type="password" placeholder="Password"
+                                   class="input-field" style="padding-right:3rem;" autocomplete="current-password">
+                            <button type="button" onclick="togglePassword('loginPassword', 'eyeLogin')"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                                <i id="eyeLogin" class="fa-solid fa-eye-slash text-sm"></i>
+                            </button>
+                            <p id="loginPassErr" class="field-error">Password must be at least 6 characters.</p>
+                        </div>
+
+                        <div class="flex items-center justify-between text-sm">
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input id="rememberMe" type="checkbox"
+                                       class="w-4 h-4 rounded border-gray-600 accent-brand-secondary">
+                                <span class="text-gray-400 group-hover:text-white transition-colors">Remember me</span>
+                            </label>
+                            <button type="button" onclick="openForgotModal()"
+                                    class="text-brand-secondary hover:text-brand-primary transition-colors font-medium">
+                                Forgot Password?
+                            </button>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r from-brand-secondary to-brand-primary text-white font-bold text-[15px] shadow-[0_10px_20px_rgba(20,184,166,0.2)] hover:shadow-[0_10px_25px_rgba(20,184,166,0.4)] transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">
+                            <span id="loginBtnText">Sign In</span>
+                            <i id="loginSpinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+                        </button>
+                    </form>
+
+                    <div class="mt-8 text-center text-sm text-gray-400">
+                        Don't have an account?
+                        <button onclick="toggleForms('signup')"
+                                class="text-white font-bold hover:text-brand-primary transition-colors ml-1 border-b border-dashed border-brand-primary pb-0.5">
+                            Create Account
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===== SIGN UP FORM ===== -->
+                <div id="signupForm" class="w-full max-w-md mx-auto hidden-form">
+                    <div class="mb-6">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Create Account</h2>
+                        <p class="text-gray-400 text-sm">Join the centralized digital healthcare platform today.</p>
+                    </div>
+
+                    <form id="signupFormEl" onsubmit="handleSignup(event)" class="space-y-4" novalidate>
+
+                        <!-- Role Selection Grid (Patient, Doctor, Admin) -->
+                        <div class="grid grid-cols-3 gap-3 mb-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="role" value="patient" class="peer sr-only" checked>
+                                <div class="text-center p-2 rounded-xl border border-white/10 text-gray-400 peer-checked:bg-brand-secondary/10 peer-checked:border-brand-secondary peer-checked:text-brand-secondary transition-all text-sm font-medium">
+                                    <i class="fa-solid fa-user mb-1 block"></i> Patient
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="role" value="doctor" class="peer sr-only">
+                                <div class="text-center p-2 rounded-xl border border-white/10 text-gray-400 peer-checked:bg-brand-primary/10 peer-checked:border-brand-primary peer-checked:text-brand-primary transition-all text-sm font-medium">
+                                    <i class="fa-solid fa-user-doctor mb-1 block"></i> Doctor
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="role" value="admin" class="peer sr-only">
+                                <div class="text-center p-2 rounded-xl border border-white/10 text-gray-400 peer-checked:bg-brand-accent/10 peer-checked:border-brand-accent peer-checked:text-brand-accent transition-all text-sm font-medium">
+                                    <i class="fa-solid fa-user-shield mb-1 block"></i> Admin
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="input-group relative">
+                            <i class="fa-solid fa-id-card icon-left absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 transition-colors"></i>
+                            <input id="signupName" type="text" placeholder="Full Name"
+                                   class="input-field">
+                            <p id="signupNameErr" class="field-error">Please enter your full name.</p>
+                        </div>
+
+                        <div class="input-group relative">
+                            <i class="fa-solid fa-envelope icon-left absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 transition-colors"></i>
+                            <input id="signupEmail" type="email" placeholder="Email Address"
+                                   class="input-field">
+                            <p id="signupEmailErr" class="field-error">Please enter a valid email address.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="input-group relative">
+                                <i class="fa-solid fa-lock icon-left absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 transition-colors"></i>
+                                <input id="signupPassword" type="password" placeholder="Password"
+                                       class="input-field" style="padding-right:3rem;">
+                                <button type="button" onclick="togglePassword('signupPassword', 'eyeSignup')"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                                    <i id="eyeSignup" class="fa-solid fa-eye-slash text-sm"></i>
+                                </button>
+                                <p id="signupPassErr" class="field-error">At least 6 characters.</p>
+                            </div>
+                            <div class="input-group relative">
+                                <i class="fa-solid fa-check-double icon-left absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 transition-colors"></i>
+                                <input id="signupConfirm" type="password" placeholder="Confirm"
+                                       class="input-field" style="padding-right:3rem;">
+                                <button type="button" onclick="togglePassword('signupConfirm', 'eyeConfirm')"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                                    <i id="eyeConfirm" class="fa-solid fa-eye-slash text-sm"></i>
+                                </button>
+                                <p id="signupConfirmErr" class="field-error">Passwords do not match.</p>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full py-3.5 mt-4 rounded-xl bg-gradient-to-r from-brand-primary to-brand-accent text-white font-bold text-[15px] shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:shadow-[0_10px_25px_rgba(14,165,233,0.4)] transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">
+                            <span id="signupBtnText">Create Account</span>
+                            <i id="signupSpinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 text-center text-sm text-gray-400">
+                        Already have an account?
+                        <button onclick="toggleForms('login')"
+                                class="text-white font-bold hover:text-brand-secondary transition-colors ml-1 border-b border-dashed border-brand-secondary pb-0.5">
+                            Sign In
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotModal">
+        <div class="glass-panel rounded-2xl p-8 w-full max-w-sm mx-4 animate-fade-in">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-white">Reset Password</h3>
+                <button onclick="closeForgotModal()" class="text-gray-500 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-gray-400 text-sm mb-5">Enter your email address to receive a password reset link.</p>
+            <form onsubmit="handleForgotPassword(event)" novalidate class="space-y-4">
+                <div class="input-group relative">
+                    <i class="fa-solid fa-envelope icon-left absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 transition-colors"></i>
+                    <input id="forgotEmail" type="email" placeholder="Email Address" class="input-field">
+                    <p id="forgotEmailErr" class="field-error">Please enter a valid email address.</p>
+                </div>
+                <button type="submit"
+                        class="w-full py-3 rounded-xl bg-gradient-to-r from-brand-secondary to-brand-primary text-white font-bold text-sm transition-all duration-300 hover:-translate-y-0.5">
+                    Send Reset Link
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        // ─── Firebase SDK import (Version 12.11.0) ───
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        // ─── Firebase Config ───
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        // Firebase Initialization
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ─── UI Helpers (Must be on window for inline HTML onclick/onsubmit) ───
+        
+        window.togglePassword = function(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon  = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            }
+        };
+
+        window.showToast = function(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `show ${type}`;
+            setTimeout(() => { t.className = ''; }, 3000);
+        };
+
+        window.toggleForms = function(target) {
+            const loginForm  = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+
+            if (target === 'signup') {
+                loginForm.classList.add('hidden-form');
+                signupForm.classList.remove('hidden-form');
+                signupForm.classList.remove('animate-fade-in');
+                void signupForm.offsetWidth;
+                signupForm.classList.add('animate-fade-in');
+            } else {
+                signupForm.classList.add('hidden-form');
+                loginForm.classList.remove('hidden-form');
+                loginForm.classList.remove('animate-fade-in');
+                void loginForm.offsetWidth; 
+                loginForm.classList.add('animate-fade-in');
+            }
+        };
+
+        window.openForgotModal = function()  { document.getElementById('forgotModal').classList.add('open'); };
+        window.closeForgotModal = function() { document.getElementById('forgotModal').classList.remove('open'); };
+        
+        // Modal Backdrop Click
+        document.getElementById('forgotModal').addEventListener('click', function(e) {
+            if (e.target === this) window.closeForgotModal();
+        });
+
+        window.handleForgotPassword = function(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail');
+            const emailErr = document.getElementById('forgotEmailErr');
+            
+            email.classList.remove('error');
+            emailErr.classList.remove('show');
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.value.trim())) {
+                email.classList.add('error'); 
+                emailErr.classList.add('show'); 
+                return;
+            }
+            window.closeForgotModal();
+            window.showToast('✓ Reset link sent successfully!', 'success');
+            email.value = '';
+        };
+
+        // ─── Firebase Signup Logic ───
+        window.handleSignup = async function(e) {
+            e.preventDefault();
+            let valid = true;
+
+            const name = document.getElementById('signupName');
+            const email = document.getElementById('signupEmail');
+            const pass = document.getElementById('signupPassword');
+            const confirm = document.getElementById('signupConfirm');
+            
+            const nameErr = document.getElementById('signupNameErr');
+            const emailErr = document.getElementById('signupEmailErr');
+            const passErr = document.getElementById('signupPassErr');
+            const confirmErr = document.getElementById('signupConfirmErr');
+            
+            const role = document.querySelector('input[name="role"]:checked').value;
+
+            // Reset UI states
+            [name, email, pass, confirm].forEach(el => el.classList.remove('error'));
+            [nameErr, emailErr, passErr, confirmErr].forEach(el => el.classList.remove('show'));
+
+            if (name.value.trim().length < 2) { name.classList.add('error'); nameErr.classList.add('show'); valid = false; }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.value.trim())) { email.classList.add('error'); emailErr.classList.add('show'); valid = false; }
+            if (pass.value.length < 6) { pass.classList.add('error'); passErr.classList.add('show'); valid = false; }
+            if (pass.value !== confirm.value || confirm.value === '') { confirm.classList.add('error'); confirmErr.classList.add('show'); valid = false; }
+
+            if (!valid) return;
+
+            const btn = document.getElementById('signupBtnText');
+            const spin = document.getElementById('signupSpinner');
+            btn.textContent = 'Creating...';
+            spin.classList.remove('hidden');
+
+            try {
+                // 1. Firebase Auth making user
+                const userCredential = await createUserWithEmailAndPassword(auth, email.value, pass.value);
+                const user = userCredential.user;
+
+                // 2. Firestore database user role and info save 
+                await setDoc(doc(db, "users", user.uid), {
+                    name: name.value,
+                    email: email.value,
+                    role: role,
+                    createdAt: new Date()
+                });
+
+                spin.classList.add('hidden');
+                btn.textContent = 'Create Account';
+                window.showToast('✓ Account created successfully!', 'success');
+                
+                window.toggleForms('login');
+                document.getElementById('signupFormEl').reset();
+
+            } catch (error) {
+                spin.classList.add('hidden');
+                btn.textContent = 'Create Account';
+                let errorMsg = 'An error occurred';
+                if(error.code === 'auth/email-already-in-use') errorMsg = 'This email is already registered.';
+                window.showToast(errorMsg, 'error');
+                console.error(error);
+            }
+        };
+
+        // ─── Firebase Login Logic ───
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            let valid = true;
+
+            const email = document.getElementById('loginEmail');
+            const password = document.getElementById('loginPassword');
+            const emailErr = document.getElementById('loginEmailErr');
+            const passErr  = document.getElementById('loginPassErr');
+
+            [email, password].forEach(el => el.classList.remove('error'));
+            [emailErr, passErr].forEach(el => el.classList.remove('show'));
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.value.trim())) { email.classList.add('error'); emailErr.classList.add('show'); valid = false; }
+            if (password.value.length < 6) { password.classList.add('error'); passErr.classList.add('show'); valid = false; }
+
+            if (!valid) return;
+
+            const btn = document.getElementById('loginBtnText');
+            const spin = document.getElementById('loginSpinner');
+            btn.textContent = 'Signing In...';
+            spin.classList.remove('hidden');
+
+            try {
+                // 1. user authentication with Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
+                const user = userCredential.user;
+
+                // 2. Firestore to Role Fetching
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const userRole = docSnap.data().role;
+                    window.showToast('✓ Login successful!', 'success');
+
+                    // 3. Role based redirection
+                    setTimeout(() => {
+                        if (userRole === 'patient') {
+                            window.location.href = 'PatientDashboard.html';
+                        } else if (userRole === 'doctor') {
+                            window.location.href = '../doct/DoctorDashboard.html';
+                        } else if (userRole === 'admin') {
+                            window.location.href = 'AdminDashboard.html';
+                        } else {
+                            window.location.href = 'index.html';
+                        }
+                    }, 800);
+                } else {
+                    throw new Error("User data missing in database.");
+                }
+
+            } catch (error) {
+                spin.classList.add('hidden');
+                btn.textContent = 'Sign In';
+                window.showToast('Invalid email or password!', 'error');
+                console.error(error);
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Registrations</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',
+                            accent: '#6366f1',
+                            emerald: '#10b981' 
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* General Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
+        /* Modal-like Tooltip implementation for truncated text */
+        .complaint-box[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: normal;
+            width: max-content;
+            max-width: 320px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.8), 0 8px 10px -6px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            z-index: 50;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        /* Triangle pointer for tooltip */
+        .complaint-box[title]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: #0f172a transparent transparent transparent;
+            margin-bottom: 0px;
+            z-index: 51;
+        }
+
+        /* Loader & Toast Styles */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #14b8a6; }
+        #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; padding: 0.875rem 1.5rem; border-radius: 9999px; font-size: 0.875rem; transition: transform 0.4s ease, opacity 0.4s ease; opacity: 0; z-index: 9999; white-space: nowrap; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        #toast.success { border-bottom: 2px solid #14b8a6; }
+        #toast.error { border-bottom: 2px solid #ef4444; }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-brand-secondary selection:text-white pt-[70px]">
+
+    <div id="header-placeholder" data-header="header.html"></div>
+
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+    <div id="toast"></div>
+
+    <!-- Main Wrapper -->
+    <div class="flex h-[calc(100vh-70px)] w-full overflow-hidden relative">
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto px-4 py-2 lg:px-8 lg:py-2 relative z-10 w-full">
+            
+            <!-- Background Glow Effects for Fresh/Positive Vibe -->
+            <div class="absolute top-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+            <div class="absolute bottom-0 right-0 w-96 h-96 bg-brand-secondary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+            <!-- 1. header filter status -->
+            <div class="mb-2 relative z-10">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+                        <i class="fa-solid fa-user-plus text-emerald-400"></i> New Registrations
+                    </h1>
+                    <p class="text-sm text-gray-400 max-w-2xl truncate">
+                        Quickly review and manage recently registered patients in your directory.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. patient list (Compact Horizontal List) -->
+            <div id="appointments-container" class="space-y-4 relative z-10 pb-12 mt-4">
+                <!-- Javascript will inject pending appointment cards here -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals Section -->
+
+    <!-- Approve Modal -->
+    <div id="approve-modal" class="fixed inset-0 z-[60] bg-[#020617]/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity opacity-0 duration-300">
+        <div class="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl shadow-emerald-500/10 transform scale-95 transition-transform duration-300 p-6 flex flex-col items-center text-center">
+            <div class="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-3xl mb-4">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Approve Appointment?</h3>
+            <p class="text-sm text-gray-400 mb-6">Are you sure you want to approve this appointment request? The patient will be notified.</p>
+            
+            <div class="flex gap-3 w-full">
+                <button onclick="closeModal('approve-modal')" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                    No, Wait
+                </button>
+                <button onclick="confirmApproveAction()" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all">
+                    Yes, Approve
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Modal -->
+    <div id="cancel-modal" class="fixed inset-0 z-[60] bg-[#020617]/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity opacity-0 duration-300">
+        <div class="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl shadow-red-500/10 transform scale-95 transition-transform duration-300 p-6 flex flex-col items-center text-center">
+            <div class="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center text-3xl mb-4">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Cancel Appointment?</h3>
+            <p class="text-sm text-gray-400 mb-6">Are you sure you want to cancel this appointment? This action will move it to the cancelled list.</p>
+            
+            <div class="flex gap-3 w-full">
+                <button onclick="closeModal('cancel-modal')" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                    Keep It
+                </button>
+                <button onclick="confirmCancelAction()" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all">
+                    Yes, Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="load.js"></script>
+
+    <!-- FIREBASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let targetApptId = null;
+
+        // UI Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `show ${type}`;
+            
+            // Handle error toast styling dynamically
+            if(type === 'error') {
+                t.style.borderBottomColor = '#ef4444';
+            } else {
+                t.style.borderBottomColor = '#14b8a6';
+            }
+            
+            setTimeout(() => { t.className = ''; }, 3000);
+        }
+
+        // Modal Logic
+        window.openModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('div');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        window.closeModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); 
+        }
+
+        // Time Ago Formatter
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            interval = seconds / 86400;
+            if (interval >= 1) return Math.floor(interval) + " days ago";
+            interval = seconds / 3600;
+            if (interval >= 1) return Math.floor(interval) + " hours ago";
+            interval = seconds / 60;
+            if (interval >= 1) return Math.floor(interval) + " minutes ago";
+            return "Just now";
+        }
+
+        // --- Init & Load Data ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadPendingAppointments();
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        async function loadPendingAppointments() {
+            showLoader();
+            try {
+                const container = document.getElementById('appointments-container');
+                container.innerHTML = '';
+
+                // Fetch "Pending" appointments for this doctor
+                const q = query(
+                    collection(db, "appointments"), 
+                    where("doctorId", "==", currentUser.uid),
+                    where("status", "==", "Pending")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                let appointments = [];
+
+                querySnapshot.forEach((doc) => {
+                    appointments.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort by creation date (Newest requests first)
+                appointments.sort((a, b) => {
+                    const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                    const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                    return timeB - timeA;
+                });
+
+                if (appointments.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-20 opacity-60">
+                            <i class="fa-solid fa-mug-hot text-6xl mb-4 text-gray-500"></i>
+                            <h3 class="text-xl font-bold text-gray-400">No Pending Requests</h3>
+                            <p class="text-sm text-gray-500 mt-2">You have completely cleared your queue!</p>
+                        </div>
+                    `;
+                    hideLoader();
+                    return;
+                }
+
+                // Fetch patient details and render cards
+                for (let i = 0; i < appointments.length; i++) {
+                    const appt = appointments[i];
+                    
+                    // Default patient data
+                    let patientName = "Unknown Patient";
+                    let patientAvatar = `https://ui-avatars.com/api/?name=Unknown&background=10b981&color=fff`;
+
+                    // Fetch patient details from users collection
+                    if (appt.patientId) {
+                        const patientSnap = await getDoc(doc(db, "users", appt.patientId));
+                        if (patientSnap.exists()) {
+                            const pData = patientSnap.data();
+                            patientName = pData.name || "Unknown Patient";
+                            if (pData.profileImageUrl) {
+                                patientAvatar = pData.profileImageUrl;
+                            } else {
+                                patientAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(patientName)}&background=10b981&color=fff`;
+                            }
+                        }
+                    }
+
+                    const createdAtDate = appt.createdAt ? appt.createdAt.toDate() : new Date();
+                    const bookedOn = `${createdAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}, ${createdAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                    const registeredAgo = timeAgo(createdAtDate);
+                    
+                    // Display Appt ID
+                    const shortId = `PT-${appt.id.substring(0, 4).toUpperCase()}`;
+
+                    // Consultation Type UI mapping
+                    const isOnline = (appt.type === "Online" || appt.type === "Online Video");
+                    const typeIcon = isOnline ? "fa-video" : "fa-hospital-user";
+                    const typeLabel = isOnline ? "Online" : "In-Person";
+                    const typeClasses = isOnline 
+                        ? "bg-blue-900/40 text-blue-300 border-blue-500/20" 
+                        : "bg-indigo-900/40 text-indigo-300 border-indigo-500/20";
+                    
+                    // Alternate Border colors for styling
+                    const borderClass = i % 2 === 0 ? "border-brand-secondary" : "border-brand-primary";
+
+                    const card = document.createElement('div');
+                    card.className = `flex flex-col lg:flex-row items-start lg:items-center gap-4 p-4 glass-card rounded-2xl border-l-[5px] ${borderClass} hover:bg-white/[0.02] hover:shadow-[0_0_20px_rgba(20,184,166,0.1)] transition-all group`;
+                    
+                    card.innerHTML = `
+                        <!-- Schedule Info -->
+                        <div class="flex flex-col gap-1 shrink-0 lg:w-[270px]">
+                            <div class="flex items-center gap-2 text-white font-bold text-sm tracking-wide whitespace-nowrap">
+                                <i class="fa-regular fa-calendar text-gray-400"></i>
+                                <span>${appt.date} (${appt.day})</span>
+                                <span class="text-gray-600 font-normal">|</span>
+                                <i class="fa-regular fa-clock text-gray-400"></i>
+                                <span>${appt.time}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-medium pl-0.5 whitespace-nowrap">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                <span>Booked: ${bookedOn}</span>
+                            </div>
+                        </div>
+
+                        <!-- Patient Info -->
+                        <div class="flex items-center gap-3 shrink-0 lg:w-[210px]">
+                            <img src="${patientAvatar}" alt="Avatar" class="w-12 h-12 rounded-full border-2 border-white/20 shadow-md object-cover">
+                            <div>
+                                <h3 class="text-base font-bold text-white group-hover:text-brand-secondary transition-colors leading-tight">${patientName}</h3>
+                                <p class="text-[11px] font-bold text-gray-400 mt-0.5">Appt ID: <span class="text-brand-secondary">${shortId}</span></p>
+                                <p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock"></i> Registered: ${registeredAgo}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Reason for Visit -->
+                        <div class="flex-1 w-full bg-[#020617]/60 rounded-xl p-3 border border-white/5 relative cursor-help complaint-box transition-colors hover:border-white/10" title="${appt.symptoms || 'No symptoms provided.'}">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Reason for Visit / Symptoms</p>
+                                    <i class="fa-solid fa-circle-info text-gray-600 text-[10px]"></i>
+                                </div>
+                                <i class="fa-solid fa-quote-right text-gray-700 text-xs"></i>
+                            </div>
+                            <p class="text-sm text-gray-300 line-clamp-1 leading-relaxed">
+                                ${appt.symptoms || 'No symptoms provided.'}
+                            </p>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex flex-col gap-2 shrink-0 lg:w-[220px] w-full">
+                            <div class="flex gap-2 h-8">
+                                <div class="flex-1 px-2 rounded-lg text-[11px] font-medium border flex items-center justify-center whitespace-nowrap ${typeClasses}">
+                                    <i class="fa-solid ${typeIcon} mr-1.5"></i> ${typeLabel}
+                                </div>
+                                <button onclick="window.viewPatientProfile('${appt.patientId}')" class="w-8 h-8 shrink-0 bg-[#1e293b]/50 hover:bg-white/10 text-gray-300 rounded-lg flex items-center justify-center transition-colors border border-white/5 text-sm" title="View Full Profile">
+                                    <i class="fa-regular fa-folder-open"></i>
+                                </button>
+                            </div>
+                            <div class="flex gap-2 h-8">
+                                <button onclick="window.openApproveModal('${appt.id}')" class="flex-1 bg-brand-secondary/20 hover:bg-brand-secondary hover:text-white text-brand-secondary px-2 rounded-lg text-xs font-bold transition-all border border-brand-secondary/30 flex items-center justify-center gap-1.5 shadow-lg">
+                                    <i class="fa-solid fa-check"></i> Approve
+                                </button>
+                                <button onclick="window.openCancelModal('${appt.id}')" class="flex-1 bg-[#7f1d1d]/30 hover:bg-red-500 hover:text-white text-red-400 px-2 rounded-lg text-xs font-bold transition-all border border-red-500/20 flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/5">
+                                    <i class="fa-solid fa-xmark"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+
+            } catch (error) {
+                console.error("Error loading pending appointments:", error);
+                showToast("Error loading data", "error");
+            }
+            hideLoader();
+        }
+
+        // --- Action Functions Attached to Window ---
+
+        window.viewPatientProfile = (patientId) => {
+            window.location.href = `patient-profile.html?id=${patientId}`;
+        };
+
+        window.openApproveModal = (apptId) => {
+            targetApptId = apptId;
+            window.openModal('approve-modal');
+        };
+
+        window.openCancelModal = (apptId) => {
+            targetApptId = apptId;
+            window.openModal('cancel-modal');
+        };
+
+        window.confirmApproveAction = async () => {
+            if (!targetApptId) return;
+            window.closeModal('approve-modal');
+            showLoader();
+            try {
+                await updateDoc(doc(db, "appointments", targetApptId), {
+                    status: "Approved"
+                });
+                hideLoader();
+                showToast("Appointment Approved successfully!");
+                loadPendingAppointments();
+            } catch (error) {
+                hideLoader();
+                console.error("Error approving:", error);
+                showToast("Failed to approve.", "error");
+            }
+        };
+
+        window.confirmCancelAction = async () => {
+            if (!targetApptId) return;
+            window.closeModal('cancel-modal');
+            showLoader();
+            try {
+                await updateDoc(doc(db, "appointments", targetApptId), {
+                    status: "Cancelled"
+                });
+                hideLoader();
+                showToast("Appointment Cancelled successfully!", "success");
+                loadPendingAppointments();
+            } catch (error) {
+                hideLoader();
+                console.error("Error cancelling:", error);
+                showToast("Failed to cancel.", "error");
+            }
+        };
+
+    </script>
+</body>
+</html>

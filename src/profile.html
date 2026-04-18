@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    
+    <style>
+        /* =========================================
+           1. CSS Variables (Design System)
+           ========================================= */
+        :root {
+            --color-primary: #0ea5e9;       
+            --color-primary-dark: #0284c7;  
+            --primary-light: #e0f2fe;       
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --text-main: #0f172a;     
+            --text-muted: #64748b;    
+            --text-light: #94a3b8;    
+            --border-color: #e2e8f0;  
+            --border-focus: #bae6fd;  
+            --icon-primary: #0284c7;  
+            --icon-alert: #e11d48;    
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        /* =========================================
+           2. Reset & Base Styles
+           ========================================= */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            line-height: 1.5; 
+        }
+
+        button { 
+            border: none; 
+            background: none; 
+            cursor: pointer; 
+            font-family: inherit; 
+        }
+
+        /* =========================================
+           3. Profile Layout & Cards
+           ========================================= */
+        .profile-container { 
+            max-width: 1100px; 
+            margin: 90px auto 40px; 
+            padding: 0 24px; 
+            display: grid; 
+            grid-template-columns: 320px 1fr; 
+            gap: 24px; 
+        }
+
+        .card { 
+            background: var(--bg-surface); 
+            border-radius: var(--radius-lg); 
+            border: 1px solid var(--border-color); 
+            box-shadow: var(--shadow-sm); 
+            padding: 24px; 
+            margin-bottom: 24px; 
+        }
+
+        .card-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            padding-bottom: 16px; 
+            border-bottom: 1px solid var(--border-color); 
+        }
+
+        .card-title { 
+            font-size: 1.15rem; 
+            font-weight: 700; 
+            color: var(--text-main); 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+
+        .card-title i { 
+            color: var(--color-primary); 
+        }
+
+        /* =========================================
+           4. Sidebar Styles
+           ========================================= */
+        .profile-sidebar { 
+            text-align: center; 
+        }
+
+        .avatar-wrapper { 
+            position: relative; 
+            width: 120px; 
+            height: 120px; 
+            margin: 0 auto 16px; 
+        }
+
+        .avatar-img { 
+            width: 100%; 
+            height: 100%; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 4px solid #fff; 
+            box-shadow: var(--shadow-md); 
+        }
+
+        .avatar-edit-btn { 
+            position: absolute; 
+            bottom: 4px; 
+            right: 4px; 
+            background: var(--color-primary); 
+            color: #fff; 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border: 2px solid #fff; 
+            transition: var(--transition); 
+        }
+
+        .avatar-edit-btn:hover { 
+            background: var(--color-primary-dark); 
+            transform: scale(1.1); 
+        }
+
+        .user-name { 
+            font-size: 1.4rem; 
+            font-weight: 700; 
+            margin-bottom: 4px; 
+        }
+
+        .user-id { 
+            color: var(--text-muted); 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            margin-bottom: 16px; 
+            text-transform: capitalize; 
+        }
+
+        .blood-group-badge { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            background: #fee2e2; 
+            color: #ef4444; 
+            padding: 6px 16px; 
+            border-radius: 20px; 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            margin-bottom: 24px; 
+            transition: var(--transition); 
+        }
+
+        .quick-stats { 
+            display: flex; 
+            border-top: 1px solid var(--border-color); 
+            padding-top: 16px; 
+        }
+
+        .stat-box { 
+            flex: 1; 
+            text-align: center; 
+            border-right: 1px solid var(--border-color); 
+        }
+
+        .stat-box:last-child { 
+            border-right: none; 
+        }
+
+        .stat-value { 
+            font-size: 1.25rem; 
+            font-weight: 700; 
+            color: var(--text-main); 
+        }
+
+        .stat-label { 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            font-weight: 500; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+
+        /* =========================================
+           5. Forms & Inputs
+           ========================================= */
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+        }
+
+        .input-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+
+        .input-group.full-width { 
+            grid-column: 1 / -1; 
+        }
+
+        .input-label { 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+
+        .input-label i { 
+            color: var(--icon-primary); 
+            font-size: 1.1em; 
+            width: 16px; 
+            text-align: center; 
+        }
+
+        .input-label i.alert-icon { 
+            color: var(--icon-alert); 
+        }
+
+        .input-field { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            font-size: 0.95rem; 
+            color: var(--text-main); 
+            background-color: var(--bg-body); 
+            transition: var(--transition); 
+            font-family: inherit; 
+        }
+
+        .input-field:focus { 
+            outline: none; 
+            border-color: var(--color-primary); 
+            background-color: #fff; 
+            box-shadow: 0 0 0 3px var(--border-focus); 
+        }
+
+        .input-field:read-only, 
+        .input-field:disabled { 
+            background-color: transparent; 
+            border-color: transparent; 
+            padding-left: 0; 
+            font-weight: 500; 
+            color: var(--text-main); 
+        }
+
+        select.input-field { 
+            cursor: pointer; 
+            appearance: none; 
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="%2364748b" d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>'); 
+            background-repeat: no-repeat; 
+            background-position: right 16px center; 
+            background-size: 14px; 
+            padding-right: 40px; 
+        }
+
+        select.input-field:disabled { 
+            background-image: none; 
+            cursor: default; 
+        }
+
+        /* =========================================
+           6. Specific Elements (BMI, Buttons, Loader)
+           ========================================= */
+        .bmi-box { 
+            background: var(--primary-light); 
+            border: 1px dashed var(--color-primary); 
+            padding: 16px; 
+            border-radius: 8px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+        }
+
+        .bmi-value { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            color: var(--color-primary-dark); 
+        }
+
+        .bmi-status { 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            color: #10b981; 
+            margin-top: 4px; 
+        }
+
+        .btn { 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+            transition: var(--transition); 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+
+        .btn-primary { 
+            background: var(--color-primary); 
+            color: #fff; 
+        }
+
+        .btn-primary:hover { 
+            background: var(--color-primary-dark); 
+        }
+
+        .btn-outline { 
+            border: 1px solid var(--border-color); 
+            color: var(--text-main); 
+        }
+
+        .btn-outline:hover { 
+            background: var(--bg-body); 
+            border-color: var(--text-muted); 
+        }
+
+        .loader-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(255,255,255,0.7); 
+            z-index: 9999; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 2rem; 
+            color: var(--color-primary); 
+        }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #0f172a;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #f8fafc;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+
+        #toast.show { 
+            transform: translateX(-50%) translateY(0); 
+            opacity: 1; 
+        }
+
+        #toast.success { 
+            border-color: #14b8a6; 
+            color: #2dd4bf; 
+        }
+
+        #toast.error { 
+            border-color: #ef4444; 
+            color: #f87171; 
+        }
+
+        /* =========================================
+           7. Responsive Media Queries
+           ========================================= */
+        @media (max-width: 900px) { 
+            .profile-container { grid-template-columns: 1fr; } 
+            .avatar-wrapper { width: 100px; height: 100px; } 
+        }
+        
+        @media (max-width: 600px) { 
+            .form-grid { grid-template-columns: 1fr; } 
+            .profile-container { padding: 0 16px; margin-top: 80px; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-spinner fa-spin"></i></div>
+    <div id="toast"></div>
+
+    <div class="profile-container">
+        
+        <aside>
+            <div class="card profile-sidebar">
+                <div class="avatar-wrapper">
+                    <img id="sidebar-avatar" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="Profile Picture" class="avatar-img">
+                    <button id="upload-avatar-btn" class="avatar-edit-btn" title="Change Photo">
+                        <i class="fa-solid fa-camera"></i>
+                    </button>
+                    <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                </div>
+                
+                <h2 id="sidebar-name" class="user-name">Name Loading...</h2>
+                <div id="sidebar-role" class="user-id">Portal:...</div>
+                
+                <div id="sidebar-blood-group" class="blood-group-badge">
+                    <i class="fa-solid fa-droplet"></i> N/A
+                </div>
+                
+                <div class="quick-stats">
+                    <div class="stat-box">
+                        <div class="stat-value">00</div>
+                        <div class="stat-label">Visits</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">00</div>
+                        <div class="stat-label">Reports</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main>
+            <div id="header"></div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fa-regular fa-user"></i> Personal Information</h2>
+                    <button class="btn btn-outline edit-toggle-btn" data-target="personal-form">
+                        <i class="fa-regular fa-pen-to-square"></i> Edit
+                    </button>
+                </div>
+                
+                <form id="personal-form" class="form-grid">
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-regular fa-id-badge"></i> Full Name</label>
+                        <input type="text" id="personal-name" class="input-field" readonly disabled>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-cake-candles"></i> Date of Birth</label>
+                        <input type="date" id="personal-dob" class="input-field" readonly>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-venus-mars"></i> Gender</label>
+                        <select id="personal-gender" class="input-field" disabled>
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-droplet alert-icon"></i> Blood Group</label>
+                        <select id="blood-group-select" class="input-field" disabled>
+                            <option value="">Select</option>
+                            <option value="A+ (Positive)">A+ (Positive)</option>
+                            <option value="A- (Negative)">A- (Negative)</option>
+                            <option value="B+ (Positive)">B+ (Positive)</option>
+                            <option value="B- (Negative)">B- (Negative)</option>
+                            <option value="O+ (Positive)">O+ (Positive)</option>
+                            <option value="O- (Negative)">O- (Negative)</option>
+                            <option value="AB+ (Positive)">AB+ (Positive)</option>
+                            <option value="AB- (Negative)">AB- (Negative)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group full-width">
+                        <label class="input-label"><i class="fa-solid fa-briefcase"></i> Occupation</label>
+                        <input type="text" id="personal-occupation" class="input-field" placeholder="E.g. Software Engineer" readonly>
+                    </div>
+                    
+                    <div class="input-group full-width" style="margin-top: 10px; border-top: 1px dashed var(--border-color); padding-top: 20px;">
+                        <h3 class="input-label" style="font-size: 1rem; color: var(--text-main);"><i class="fa-solid fa-address-book"></i> Contact Details</h3>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-phone"></i> Phone Number</label>
+                        <input type="tel" id="personal-phone" class="input-field" placeholder="+88017....." readonly>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-envelope"></i> Email Address</label>
+                        <input type="email" id="personal-email" class="input-field" readonly disabled>
+                    </div>
+                    
+                    <div class="input-group full-width">
+                        <label class="input-label"><i class="fa-solid fa-location-dot"></i> Present Address</label>
+                        <input type="text" id="personal-present-address" class="input-field" placeholder="Enter present address" readonly>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label class="input-label"><i class="fa-solid fa-map-location-dot"></i> Permanent Address</label>
+                        <input type="text" id="personal-permanent-address" class="input-field" placeholder="Enter permanent address" readonly>
+                    </div>
+                    
+                    <div class="input-group full-width save-action" style="display: none; margin-top: 10px;">
+                        <button type="button" id="save-personal-btn" class="btn btn-primary" style="width: fit-content;"><i class="fa-solid fa-check"></i> Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fa-solid fa-notes-medical"></i> Medical Data</h2>
+                    <button class="btn btn-outline edit-toggle-btn" data-target="medical-form">
+                        <i class="fa-regular fa-pen-to-square"></i> Update
+                    </button>
+                </div>
+                
+                <form id="medical-form" class="form-grid">
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-ruler-vertical"></i> Height (CM)</label>
+                        <input type="number" id="height-input" class="input-field calc-bmi" placeholder="E.g. 165" readonly>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-weight-scale"></i> Weight (KG)</label>
+                        <input type="number" id="weight-input" class="input-field calc-bmi" placeholder="E.g. 65" readonly>
+                    </div>
+                    
+                    <div class="input-group bmi-box full-width">
+                        <span class="input-label" style="color: var(--color-primary-dark); justify-content: center;"><i class="fa-solid fa-calculator"></i> Calculated BMI</span>
+                        <div id="bmi-result" class="bmi-value">--</div>
+                        <div id="bmi-text" class="bmi-status" style="color:var(--text-muted);">Enter valid data</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-virus-slash alert-icon"></i> Known Allergies</label>
+                        <input type="text" id="medical-allergies" class="input-field" placeholder="E.g. Dust, Peanuts" readonly>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-file-medical alert-icon"></i> Chronic Conditions</label>
+                        <input type="text" id="medical-chronic" class="input-field" placeholder="E.g. Asthma, Diabetes" readonly>
+                    </div>
+
+                    <div class="input-group full-width save-action" style="display: none; margin-top: 10px;">
+                        <button type="button" id="save-medical-btn" class="btn btn-primary" style="width: fit-content;"><i class="fa-solid fa-check"></i> Save Data</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fa-solid fa-truck-medical alert-icon"></i> Emergency Contact</h2>
+                    <button class="btn btn-outline edit-toggle-btn" data-target="emergency-form">
+                        <i class="fa-regular fa-pen-to-square"></i> Edit
+                    </button>
+                </div>
+                
+                <form id="emergency-form" class="form-grid">
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-user-shield"></i> Contact Person</label>
+                        <input type="text" id="emg-name" class="input-field" placeholder="Name" readonly>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label"><i class="fa-solid fa-people-arrows"></i> Relationship</label>
+                        <select id="emg-relation" class="input-field" disabled>
+                            <option value="">Select</option>
+                            <option value="Father">Father</option>
+                            <option value="Mother">Mother</option>
+                            <option value="Son/Daughter">Son/Daughter</option>
+                            <option value="Spouse">Spouse</option>
+                            <option value="Sibling">Sibling</option>
+                            <option value="Friend">Friend</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group full-width">
+                        <label class="input-label"><i class="fa-solid fa-phone-volume alert-icon"></i> Emergency Phone</label>
+                        <input type="tel" id="emg-phone" class="input-field" placeholder="+88017....." readonly>
+                    </div>
+
+                    <div class="input-group full-width save-action" style="display: none; margin-top: 10px;">
+                        <button type="button" id="save-emg-btn" class="btn btn-primary" style="width: fit-content;"><i class="fa-solid fa-check"></i> Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+        </main>
+    </div>
+    
+    <script src="js/load.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // Helper Functions: Loader & Toast
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `show ${type}`;
+            setTimeout(() => { t.className = ''; }, 3000);
+        }
+
+        // Cloudinary Upload Function
+        async function uploadFileToCloudinary(file) {
+            const cloudName = "dhcq8o9xq";
+            const uploadPreset = "cdhp_uploads";
+            const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", uploadPreset);
+
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.secure_url) {
+                    return data.secure_url;
+                } else {
+                    throw new Error(data.error.message || "Upload failed");
+                }
+            } catch (error) {
+                console.error("Cloudinary Upload Error:", error);
+                throw error;
+            }
+        }
+
+        // Fetch Data on Load
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                try {
+                    const docRef = doc(db, "users", user.uid);
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+
+                        // 1. Sidebar & Basic Data
+                        document.getElementById('sidebar-name').textContent = data.name || 'User';
+                        document.getElementById('personal-name').value = data.name || '';
+                        document.getElementById('personal-email').value = data.email || '';
+                        
+                        if (data.role) {
+                            document.getElementById('sidebar-role').textContent = `Portal : ${data.role.charAt(0).toUpperCase() + data.role.slice(1)}`;
+                        }
+
+                        // Avatar
+                        if (data.profileImageUrl) {
+                            document.getElementById('sidebar-avatar').src = data.profileImageUrl;
+                        } else {
+                            document.getElementById('sidebar-avatar').src = `https://ui-avatars.com/api/?name=${data.name}&background=0D8ABC&color=fff`;
+                        }
+
+                        // 2. Personal Form Fields
+                        if(data.dob) document.getElementById('personal-dob').value = data.dob;
+                        if(data.gender) document.getElementById('personal-gender').value = data.gender;
+                        if(data.bloodGroup) {
+                            document.getElementById('blood-group-select').value = data.bloodGroup;
+                            document.getElementById('sidebar-blood-group').innerHTML = `<i class="fa-solid fa-droplet"></i> ${data.bloodGroup}`;
+                        }
+                        if(data.occupation) document.getElementById('personal-occupation').value = data.occupation;
+                        if(data.phone) document.getElementById('personal-phone').value = data.phone;
+                        if(data.presentAddress) document.getElementById('personal-present-address').value = data.presentAddress;
+                        if(data.permanentAddress) document.getElementById('personal-permanent-address').value = data.permanentAddress;
+
+                        // 3. Medical Data Fields
+                        if(data.height) document.getElementById('height-input').value = data.height;
+                        if(data.weight) document.getElementById('weight-input').value = data.weight;
+                        if(data.allergies) document.getElementById('medical-allergies').value = data.allergies;
+                        if(data.chronicConditions) document.getElementById('medical-chronic').value = data.chronicConditions;
+                        calculateBMI();
+
+                        // 4. Emergency Form Fields
+                        if(data.emgName) document.getElementById('emg-name').value = data.emgName;
+                        if(data.emgRelation) document.getElementById('emg-relation').value = data.emgRelation;
+                        if(data.emgPhone) document.getElementById('emg-phone').value = data.emgPhone;
+                    }
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                }
+            } else {
+                window.location.href = 'index.html'; 
+            }
+        });
+
+        // Avatar Upload Logic
+        const avatarBtn = document.getElementById('upload-avatar-btn');
+        const avatarInput = document.getElementById('avatar-input');
+        
+        avatarBtn.addEventListener('click', () => {
+            avatarInput.click();
+        });
+
+        avatarInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                showLoader();
+                
+                const fileUrl = await uploadFileToCloudinary(file);
+                
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    profileImageUrl: fileUrl
+                });
+
+                document.getElementById('sidebar-avatar').src = fileUrl;
+                hideLoader();
+                showToast("Profile picture updated successfully!", "success");
+
+            } catch (error) {
+                hideLoader();
+                console.error("Upload error:", error);
+                showToast("Failed to upload image. Please try again.", "error");
+            }
+        });
+
+        // Save Form Logic: Personal Information
+        document.getElementById('save-personal-btn').addEventListener('click', async () => {
+            try {
+                showLoader();
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    dob: document.getElementById('personal-dob').value,
+                    gender: document.getElementById('personal-gender').value,
+                    bloodGroup: document.getElementById('blood-group-select').value,
+                    occupation: document.getElementById('personal-occupation').value,
+                    phone: document.getElementById('personal-phone').value,
+                    presentAddress: document.getElementById('personal-present-address').value,
+                    permanentAddress: document.getElementById('personal-permanent-address').value
+                });
+                hideLoader();
+                showToast("Personal Information saved!", "success");
+                toggleEditMode(document.querySelector('[data-target="personal-form"]'), "personal-form");
+            } catch (error) {
+                hideLoader();
+                console.error("Error saving personal data:", error);
+            }
+        });
+
+        // Save Form Logic: Medical Data
+        document.getElementById('save-medical-btn').addEventListener('click', async () => {
+            try {
+                showLoader();
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    height: document.getElementById('height-input').value,
+                    weight: document.getElementById('weight-input').value,
+                    allergies: document.getElementById('medical-allergies').value,
+                    chronicConditions: document.getElementById('medical-chronic').value
+                });
+                hideLoader();
+                showToast("Medical Data saved!", "success");
+                toggleEditMode(document.querySelector('[data-target="medical-form"]'), "medical-form");
+            } catch (error) {
+                hideLoader();
+                console.error("Error saving medical data:", error);
+            }
+        });
+
+        // Save Form Logic: Emergency Contact
+        document.getElementById('save-emg-btn').addEventListener('click', async () => {
+            try {
+                showLoader();
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    emgName: document.getElementById('emg-name').value,
+                    emgRelation: document.getElementById('emg-relation').value,
+                    emgPhone: document.getElementById('emg-phone').value
+                });
+                hideLoader();
+                showToast("Emergency Contact saved!", "success");
+                toggleEditMode(document.querySelector('[data-target="emergency-form"]'), "emergency-form");
+            } catch (error) {
+                hideLoader();
+                console.error("Error saving emergency data:", error);
+            }
+        });
+
+        // Edit Mode Toggle Function
+        function toggleEditMode(btnElement, targetFormId) {
+            const form = document.getElementById(targetFormId);
+            const inputs = form.querySelectorAll('.input-field:not([id="personal-name"]):not([id="personal-email"])');
+            const saveBtnArea = form.querySelector('.save-action');
+            
+            const isReadOnly = inputs[0].hasAttribute('readonly') || inputs[0].hasAttribute('disabled');
+            
+            if (isReadOnly) {
+                inputs.forEach(input => {
+                    if (input.tagName === 'SELECT') { 
+                        input.removeAttribute('disabled'); 
+                    } else { 
+                        input.removeAttribute('readonly'); 
+                    }
+                });
+                saveBtnArea.style.display = 'block';
+                btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel';
+                btnElement.classList.replace('btn-outline', 'btn-primary');
+                btnElement.style.background = '#ef4444'; 
+                btnElement.style.borderColor = '#ef4444';
+            } else {
+                inputs.forEach(input => {
+                    if (input.tagName === 'SELECT') { 
+                        input.setAttribute('disabled', true); 
+                    } else { 
+                        input.setAttribute('readonly', true); 
+                    }
+                });
+                saveBtnArea.style.display = 'none';
+                btnElement.innerHTML = '<i class="fa-regular fa-pen-to-square"></i> Edit';
+                btnElement.classList.replace('btn-primary', 'btn-outline');
+                btnElement.style.background = '';
+                btnElement.style.borderColor = '';
+            }
+        }
+
+        // Attach listeners to all "Edit" buttons
+        document.querySelectorAll('.edit-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleEditMode(this, this.getAttribute('data-target'));
+            });
+        });
+
+        // BMI Calculation Logic
+        const heightInput = document.getElementById('height-input');
+        const weightInput = document.getElementById('weight-input');
+        const bmiResult = document.getElementById('bmi-result');
+        const bmiText = document.getElementById('bmi-text');
+
+        function calculateBMI() {
+            const heightCm = parseFloat(heightInput.value);
+            const weightKg = parseFloat(weightInput.value);
+
+            if (heightCm > 0 && weightKg > 0) {
+                const heightM = heightCm / 100;
+                const bmi = (weightKg / (heightM * heightM)).toFixed(1);
+                bmiResult.textContent = bmi;
+
+                if (bmi < 18.5) {
+                    bmiText.textContent = "Underweight";
+                    bmiText.style.color = "#f59e0b"; 
+                } else if (bmi >= 18.5 && bmi <= 24.9) {
+                    bmiText.textContent = "Normal Weight";
+                    bmiText.style.color = "#10b981"; 
+                } else if (bmi >= 25 && bmi <= 29.9) {
+                    bmiText.textContent = "Overweight";
+                    bmiText.style.color = "#f97316"; 
+                } else {
+                    bmiText.textContent = "Obese";
+                    bmiText.style.color = "#ef4444"; 
+                }
+            } else {
+                bmiResult.textContent = "--";
+                bmiText.textContent = "Enter valid data";
+                bmiText.style.color = "var(--text-muted)";
+            }
+        }
+
+        // Trigger BMI calculation on input change
+        heightInput.addEventListener('input', calculateBMI);
+        weightInput.addEventListener('input', calculateBMI);
+
+        // Sidebar Blood Group Update on selection change
+        document.getElementById('blood-group-select').addEventListener('change', (e) => {
+            const val = e.target.value;
+            const sidebarBloodGroup = document.getElementById('sidebar-blood-group');
+            if(val) {
+                sidebarBloodGroup.innerHTML = `<i class="fa-solid fa-droplet"></i> ${val}`; 
+            } else {
+                sidebarBloodGroup.innerHTML = `<i class="fa-solid fa-droplet"></i> N/A`;
+            }
+        });
+    </script>
+</body>
+</html>

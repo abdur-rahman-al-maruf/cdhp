@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Details</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+
+    <!-- Google Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&display=swap');
+    </style>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+    <!-- Tailwind Config for Custom Colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Print Styles */
+        @media print {
+            body { background-color: white !important; }
+            #header-placeholder, .no-print { display: none !important; }
+            .print-shadow-none { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+        }
+
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #0d9488; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans pt-[70px] antialiased pb-12">
+
+    <!-- External Header Placeholder -->
+    <div id="header"></div>
+
+    <!-- Global Loader -->
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-spinner fa-spin"></i></div>
+
+    <!-- Main Container -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 md:pt-6">
+        
+        <!-- Header & Actions -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 no-print">
+            <div class="flex items-center gap-3">
+                <button onclick="history.back()" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-brand-600 transition-colors shadow-sm flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div class="flex flex-col justify-center">
+                    <h1 class="text-2xl md:text-[1.65rem] font-extrabold text-slate-800 tracking-tight leading-none">Appointment Details</h1>
+                    <p class="text-slate-500 text-[0.85rem] mt-0.5">View complete information about your booking.</p>
+                </div>
+            </div>
+            <button onclick="window.print()" class="px-5 py-2.5 bg-brand-50 text-brand-700 border border-brand-100 rounded-xl hover:bg-brand-100 transition-colors font-bold text-[0.9rem] flex items-center gap-2 shadow-sm w-full sm:w-auto justify-center">
+                <i class="fa-solid fa-print text-lg"></i> Print / Save PDF
+            </button>
+        </div>
+
+        <!-- Details Card -->
+        <div class="bg-white rounded-3xl p-5 md:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-200 border-t-4 border-t-brand-500 relative overflow-hidden print-shadow-none">
+            <!-- Decorative background blob -->
+            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-brand-50 rounded-full blur-3xl opacity-50 pointer-events-none no-print"></div>
+
+            <div class="relative z-10">
+                
+                <!-- Status Banner Area -->
+                <div class="flex justify-between items-center pb-4 mb-5 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl border border-brand-100 shadow-sm">
+                            <i class="fa-regular fa-file-lines"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800" id="detail-appt-id">Loading...</h2>
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Appointment ID</p>
+                        </div>
+                    </div>
+                    <div id="status-container">
+                        <!-- Status badge injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Details Grid (Reduced gap here) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    
+                    <!-- Patient Name -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-regular fa-user text-brand-500 text-sm"></i> Patient Name
+                        </div>
+                        <div class="text-slate-800 font-bold text-[1.05rem]" id="detail-patient-name">Loading...</div>
+                    </div>
+
+                    <!-- Doctor Name -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-user-doctor text-brand-500 text-sm"></i> Doctor Name
+                        </div>
+                        <div class="text-slate-800 font-bold text-[1.05rem]" id="detail-doctor">Loading...</div>
+                    </div>
+
+                    <!-- Department -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-stethoscope text-brand-500 text-sm"></i> Department & Specialization
+                        </div>
+                        <div class="text-slate-800 font-bold text-[1.05rem]" id="detail-dept">Loading...</div>
+                    </div>
+
+                    <!-- Hospital -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-regular fa-building text-brand-500 text-sm"></i> Hospital / Clinic Name
+                        </div>
+                        <div class="text-slate-800 font-bold text-[1.05rem]" id="detail-hospital">Loading...</div>
+                    </div>
+
+                    <!-- Issue Date (When Booked) -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-clock-rotate-left text-brand-500 text-sm"></i> Issued On (Booked)
+                        </div>
+                        <div class="text-slate-800 font-bold text-[1.05rem]" id="detail-issue-date">Loading...</div>
+                    </div>
+
+                    <!-- Appointment Date -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors border-l-4 border-l-brand-400">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-regular fa-calendar-check text-brand-500 text-sm"></i> Consultation Schedule
+                        </div>
+                        <div class="text-brand-700 font-extrabold text-[1.05rem]" id="detail-appt-date">Loading...</div>
+                    </div>
+
+                    <!-- Consultation Type -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-video text-brand-500 text-sm" id="icon-type"></i> Consultation Type
+                        </div>
+                        <div class="text-slate-800 font-bold text-[1.05rem]" id="detail-type">Loading...</div>
+                    </div>
+
+                    <!-- Priority -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-triangle-exclamation text-brand-500 text-sm"></i> Priority Level
+                        </div>
+                        <div class="text-slate-800 font-bold text-[1.05rem]" id="detail-priority">Loading...</div>
+                    </div>
+
+                    <!-- Visiting Fee -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-file-invoice-dollar text-brand-500 text-sm"></i> Visiting Fee
+                        </div>
+                        <div class="text-brand-700 font-extrabold text-[1.1rem]" id="detail-fee">Loading...</div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-credit-card text-brand-500 text-sm"></i> Payment Method
+                        </div>
+                        <div class="text-slate-800 font-bold text-[1.05rem]" id="detail-payment">Loading...</div>
+                    </div>
+
+                    <!-- Symptoms / Reason -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 hover:border-brand-200 transition-colors md:col-span-2">
+                        <div class="flex items-center gap-2 text-slate-500 text-[0.7rem] font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-head-side-cough text-brand-500 text-sm"></i> Symptoms / Reason
+                        </div>
+                        <div class="text-slate-700 font-medium text-[0.95rem] leading-relaxed" id="detail-symptoms">Loading...</div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Error/Info Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 flex items-center gap-3 z-50 font-medium text-[0.95rem]">
+        <i class="fa-solid fa-circle-info text-lg" id="toast-icon"></i>
+        <span id="toast-message">Loading...</span>
+    </div>
+
+    <!-- External Script Load Placeholder -->
+    <script src="js/load.js"></script>
+
+    <!-- ========================================== -->
+    <!-- INTERNAL JAVASCRIPT / FIREBASE LOGIC       -->
+    <!-- ========================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // UI Helpers
+        const loader = document.getElementById('global-loader');
+        const showLoader = () => loader.style.display = 'flex';
+        const hideLoader = () => loader.style.display = 'none';
+
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-message');
+        const toastIcon = document.getElementById('toast-icon');
+
+        const showToast = (msg, isError = false) => {
+            toastMsg.textContent = msg;
+            if (isError) {
+                toast.classList.replace('bg-slate-800', 'bg-red-500');
+                toastIcon.classList.replace('fa-circle-info', 'fa-circle-xmark');
+            } else {
+                toast.classList.replace('bg-red-500', 'bg-slate-800');
+                toastIcon.classList.replace('fa-circle-xmark', 'fa-circle-info');
+            }
+            
+            setTimeout(() => toast.classList.remove('translate-y-20', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        };
+
+        // Helper function to generate Tailwind based status badges
+        const getStatusBadgeHtml = (status) => {
+            let badgeClass = '';
+            let iconClass = '';
+            
+            switch(status.toLowerCase()) {
+                case 'approved':
+                    badgeClass = 'bg-blue-100 text-blue-700 border-blue-200';
+                    iconClass = 'fa-solid fa-check mr-1.5';
+                    break;
+                case 'pending':
+                    badgeClass = 'bg-amber-100 text-amber-700 border-amber-200';
+                    iconClass = 'fa-regular fa-clock mr-1.5';
+                    break;
+                case 'completed':
+                    badgeClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                    iconClass = 'fa-solid fa-check-double mr-1.5';
+                    break;
+                case 'cancelled':
+                    badgeClass = 'bg-red-100 text-red-700 border-red-200';
+                    iconClass = 'fa-solid fa-xmark mr-1.5';
+                    break;
+                default:
+                    badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+                    iconClass = 'fa-solid fa-circle-info mr-1.5';
+            }
+
+            return `<span class="inline-flex items-center justify-center px-4 py-1.5 border rounded-lg text-[0.75rem] font-bold uppercase tracking-wider ${badgeClass}"><i class="${iconClass}"></i> ${status}</span>`;
+        };
+
+        // Initialize Data Load
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const apptId = urlParams.get('id');
+
+                if (!apptId) {
+                    showToast("No appointment ID found.", true);
+                    setTimeout(() => window.location.href = 'appointment.html', 1500);
+                    return;
+                }
+
+                loadAppointmentData(apptId);
+            } else {
+                window.location.href = '../src/index.html';
+            }
+        });
+
+        async function loadAppointmentData(apptId) {
+            showLoader();
+            try {
+                const apptRef = doc(db, "appointments", apptId);
+                const apptSnap = await getDoc(apptRef);
+
+                if (apptSnap.exists()) {
+                    const data = apptSnap.data();
+
+                    // Fetch Patient Name
+                    let patientName = "Unknown Patient";
+                    if (data.patientId) {
+                        const patientSnap = await getDoc(doc(db, "users", data.patientId));
+                        if (patientSnap.exists()) {
+                            patientName = patientSnap.data().name || "Unknown Patient";
+                        }
+                    }
+
+                    // Format Issue Date (CreatedAt)
+                    let issueDateStr = "N/A";
+                    if (data.createdAt) {
+                        const createdDate = data.createdAt.toDate();
+                        const datePart = createdDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                        const dayPart = createdDate.toLocaleDateString('en-US', { weekday: 'short' });
+                        const timePart = createdDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                        issueDateStr = `${datePart} (${dayPart}) | ${timePart}`;
+                    }
+
+                    // Format Appointment Date
+                    let apptDateStr = "N/A";
+                    if (data.date) {
+                        // Using Date construction avoiding timezone shift issues
+                        const [y, m, d] = data.date.split('-');
+                        const targetDate = new Date(y, m - 1, d);
+                        const datePart = targetDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                        const dayPart = data.day || targetDate.toLocaleDateString('en-US', { weekday: 'short' });
+                        const timePart = data.time || "";
+                        apptDateStr = `${datePart} (${dayPart}) | ${timePart}`;
+                    }
+
+                    // Populate UI
+                    // Generate a nice short ID for display (e.g. APP-A1B2C)
+                    const displayId = `APP-${apptId.substring(0, 5).toUpperCase()}`;
+                    document.getElementById('detail-appt-id').textContent = displayId;
+                    
+                    document.getElementById('detail-patient-name').textContent = patientName;
+                    document.getElementById('detail-doctor').textContent = data.doctorName || "Not Specified";
+                    document.getElementById('detail-dept').textContent = data.department || "Not Specified";
+                    document.getElementById('detail-hospital').textContent = data.hospital || "Not Specified";
+                    
+                    document.getElementById('detail-issue-date').textContent = issueDateStr;
+                    document.getElementById('detail-appt-date').textContent = apptDateStr;
+                    
+                    document.getElementById('detail-type').textContent = data.type || "In-person";
+                    if (data.type === 'Online Video' || data.type === 'Online') {
+                        document.getElementById('icon-type').className = "fa-solid fa-video text-brand-500 text-sm";
+                    } else {
+                        document.getElementById('icon-type').className = "fa-solid fa-hospital-user text-brand-500 text-sm";
+                    }
+
+                    document.getElementById('detail-priority').textContent = data.priority || "Normal";
+                    
+                    let feeStr = data.fee || "Not Set";
+                    if (feeStr !== "Not Set" && !feeStr.includes('৳')) {
+                        feeStr = `৳${feeStr}`;
+                    }
+                    document.getElementById('detail-fee').textContent = feeStr;
+                    
+                    // Payment Method is default since there's no gateway yet
+                    document.getElementById('detail-payment').textContent = "Cash On Desk / Hospital";
+                    
+                    document.getElementById('detail-symptoms').textContent = data.symptoms || "No symptoms provided.";
+                    
+                    document.getElementById('status-container').innerHTML = getStatusBadgeHtml(data.status || 'Pending');
+
+                } else {
+                    showToast("Appointment record not found.", true);
+                    setTimeout(() => window.location.href = 'appointment.html', 1500);
+                }
+            } catch (error) {
+                console.error("Error loading details:", error);
+                showToast("Failed to fetch appointment data.", true);
+            }
+            hideLoader();
+        }
+
+    </script>
+</body>
+</html>

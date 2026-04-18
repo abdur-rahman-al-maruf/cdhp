@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancelled Appointments</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',
+                            accent: '#6366f1',
+                            emerald: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* General Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
+        /* Modal-like Tooltip implementation for truncated text */
+        .complaint-box[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: normal;
+            width: max-content;
+            max-width: 320px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.8), 0 8px 10px -6px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            z-index: 50;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        /* Triangle pointer for tooltip */
+        .complaint-box[title]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: #0f172a transparent transparent transparent;
+            margin-bottom: 0px;
+            z-index: 51;
+        }
+
+        /* Loader & Toast Styles */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #ef4444; }
+        #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; padding: 0.875rem 1.5rem; border-radius: 9999px; font-size: 0.875rem; transition: transform 0.4s ease, opacity 0.4s ease; opacity: 0; z-index: 9999; white-space: nowrap; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        #toast.success { border-bottom: 2px solid #14b8a6; }
+        #toast.error { border-bottom: 2px solid #ef4444; }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-red-500/30 selection:text-white pt-[70px]">
+
+    <div id="header-placeholder" data-header="header.html"></div>
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+    <div id="toast"></div>
+
+    <!-- Main Wrapper -->
+    <div class="flex h-[calc(100vh-70px)] w-full overflow-hidden relative">
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto px-4 py-2 lg:px-8 lg:py-4 relative z-10 w-full">
+            
+            <!-- Background Glow Effects for Cancelled Vibe -->
+            <div class="absolute top-0 right-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+            <!-- 1. Header filter status -->
+            <div class="mb-2 relative z-10">
+                <div class="glass-card rounded-3xl p-4 md:p-5 mb-4 relative z-10 shadow-xl border-l-4 border-red-500">
+                    <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+                        <i class="fa-solid fa-ban text-red-500"></i> Cancelled Appointments
+                    </h1>
+                    <p class="text-sm text-gray-400 mt-1 max-w-2xl truncate">
+                        Review the log of appointments that have been cancelled. You can reschedule and re-approve them here.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. Main List: Patient Cards (Compact Horizontal List) -->
+            <div id="appointments-container" class="space-y-4 relative z-10 pb-12 mt-4">
+                <!-- Javascript will inject cancelled appointment cards here -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals Section -->
+    <!-- Reschedule Appointment Modal -->
+    <div id="reschedule-modal" class="fixed inset-0 z-[60] bg-[#020617]/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity opacity-0 duration-300">
+        <div class="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl shadow-brand-primary/10 transform scale-95 transition-transform duration-300 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-regular fa-calendar-plus text-brand-primary"></i> Reschedule & Approve
+                </h3>
+                <button onclick="closeModal('reschedule-modal')" class="text-gray-500 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">New Date</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="date" id="reschedule-date" class="w-full bg-[#020617] border border-white/10 text-white text-sm rounded-lg pl-9 pr-4 py-2.5 focus:border-brand-primary outline-none focus:ring-1 focus:ring-brand-primary/50 transition-all [color-scheme:dark]">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">New Time</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="time" id="reschedule-time" class="w-full bg-[#020617] border border-white/10 text-white text-sm rounded-lg pl-9 pr-4 py-2.5 focus:border-brand-primary outline-none focus:ring-1 focus:ring-brand-primary/50 transition-all [color-scheme:dark]">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="closeModal('reschedule-modal')" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-gray-300 bg-transparent hover:bg-white/5 border border-transparent transition-colors">
+                    Discard
+                </button>
+                <button onclick="submitRescheduleAction()" class="flex-[2] py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-brand-primary hover:bg-sky-400 shadow-lg shadow-brand-primary/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check"></i> Confirm & Approve
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="load.js"></script>
+
+    <!-- FIREBASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // UI Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `show ${type}`;
+            setTimeout(() => { t.className = ''; }, 3000);
+        }
+
+        // Make functions globally accessible
+        window.showToast = showToast;
+        window.showLoader = showLoader;
+        window.hideLoader = hideLoader;
+
+        // Time Ago Formatter
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            interval = seconds / 86400;
+            if (interval >= 1) return Math.floor(interval) + " days ago";
+            interval = seconds / 3600;
+            if (interval >= 1) return Math.floor(interval) + " hours ago";
+            interval = seconds / 60;
+            if (interval >= 1) return Math.floor(interval) + " minutes ago";
+            return "Just now";
+        }
+
+        // --- Init & Load Data ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadCancelledAppointments();
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        // Make load function accessible globally to refresh list
+        window.loadCancelledAppointments = async function() {
+            showLoader();
+            try {
+                const container = document.getElementById('appointments-container');
+                container.innerHTML = '';
+
+                // Fetch "Cancelled" appointments for this doctor
+                const q = query(
+                    collection(db, "appointments"), 
+                    where("doctorId", "==", currentUser.uid),
+                    where("status", "==", "Cancelled")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                let appointments = [];
+
+                querySnapshot.forEach((doc) => {
+                    appointments.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort by creation date (Newest cancelled / booked first)
+                appointments.sort((a, b) => {
+                    const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                    const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                    return timeB - timeA; 
+                });
+
+                if (appointments.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-20 opacity-60">
+                            <i class="fa-solid fa-clipboard-check text-6xl mb-4 text-gray-500"></i>
+                            <h3 class="text-xl font-bold text-gray-400">No Cancelled Appointments</h3>
+                            <p class="text-sm text-gray-500 mt-2">You don't have any cancelled appointments in your log.</p>
+                        </div>
+                    `;
+                    hideLoader();
+                    return;
+                }
+
+                // Fetch patient details and render cards
+                for (let i = 0; i < appointments.length; i++) {
+                    const appt = appointments[i];
+                    
+                    // Default patient data
+                    let patientName = "Unknown Patient";
+                    let patientAvatar = `https://ui-avatars.com/api/?name=Unknown&background=ef4444&color=fff`;
+
+                    // Fetch patient details from users collection
+                    if (appt.patientId) {
+                        const patientSnap = await getDoc(doc(db, "users", appt.patientId));
+                        if (patientSnap.exists()) {
+                            const pData = patientSnap.data();
+                            patientName = pData.name || "Unknown Patient";
+                            if (pData.profileImageUrl) {
+                                patientAvatar = pData.profileImageUrl;
+                            } else {
+                                patientAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(patientName)}&background=ef4444&color=fff`;
+                            }
+                        }
+                    }
+
+                    const createdAtDate = appt.createdAt ? appt.createdAt.toDate() : new Date();
+                    const bookedOn = `${createdAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}, ${createdAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                    
+                    // Display Appt ID
+                    const shortId = `PT-${appt.id.substring(0, 4).toUpperCase()}`;
+
+                    // Consultation Type UI mapping
+                    const isOnline = (appt.type === "Online" || appt.type === "Online Video");
+                    const typeIcon = isOnline ? "fa-video" : "fa-hospital-user";
+                    const typeLabel = isOnline ? "Online" : "In-Person";
+                    const typeClasses = isOnline 
+                        ? "bg-blue-900/40 text-blue-300 border-blue-500/20" 
+                        : "bg-indigo-900/40 text-indigo-300 border-indigo-500/20";
+
+                    const card = document.createElement('div');
+                    card.className = `flex flex-col lg:flex-row items-start lg:items-center gap-4 p-4 glass-card rounded-2xl border-l-[5px] border-red-500 hover:bg-white/[0.02] hover:shadow-[0_0_20px_rgba(239,68,68,0.15)] transition-all group opacity-80 hover:opacity-100`;
+                    
+                    card.innerHTML = `
+                        <!-- Schedule Info -->
+                        <div class="flex flex-col gap-1 shrink-0 lg:w-[240px]">
+                            <div class="flex items-center gap-2 text-gray-400 font-bold text-sm tracking-wide whitespace-nowrap line-through">
+                                <i class="fa-regular fa-calendar text-gray-500"></i>
+                                <span>${appt.date} (${appt.day})</span>
+                                <span class="text-gray-600 font-normal">|</span>
+                                <i class="fa-regular fa-clock text-gray-500"></i>
+                                <span>${appt.time}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-xs text-red-400 font-medium pl-0.5 whitespace-nowrap">
+                                <i class="fa-solid fa-ban"></i>
+                                <span>Status: Cancelled</span>
+                            </div>
+                        </div>
+
+                        <!-- Patient Info -->
+                        <div class="flex items-center gap-3 shrink-0 lg:w-[280px] xl:w-[320px]">
+                            <img src="${patientAvatar}" alt="Avatar" class="w-12 h-12 rounded-full border-2 border-red-500/30 shadow-md object-cover grayscale shrink-0">
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-base font-bold text-gray-300 group-hover:text-white transition-colors leading-tight truncate" title="${patientName}">${patientName}</h3>
+                                <p class="text-[11px] font-bold text-gray-500 mt-0.5 truncate">Appt ID: <span class="text-gray-400">${shortId}</span></p>
+                                <p class="text-[10px] text-gray-600 mt-0.5 truncate"><i class="fa-solid fa-clock-rotate-left"></i> Booked: ${bookedOn}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Reason for Visit -->
+                        <div class="flex-1 w-full min-w-0 bg-[#020617]/60 rounded-xl p-3 border border-white/5 relative cursor-help complaint-box transition-colors hover:border-white/10" title="${appt.symptoms || 'No symptoms provided.'}">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wider truncate">Reason for Visit / Symptoms</p>
+                                </div>
+                                <i class="fa-solid fa-quote-right text-gray-700 text-xs shrink-0 ml-2"></i>
+                            </div>
+                            <p class="text-sm text-gray-400 line-clamp-1 leading-relaxed break-words">
+                                ${appt.symptoms || 'No symptoms provided.'}
+                            </p>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex flex-col gap-2 shrink-0 lg:w-[220px] w-full">
+                            <button onclick="window.initReschedule('${appt.id}', '${appt.patientId}')" class="w-full bg-brand-primary/10 hover:bg-brand-primary hover:text-white text-brand-primary px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-brand-primary/30 flex items-center justify-center gap-2 shadow-sm">
+                                <i class="fa-regular fa-calendar-plus text-sm"></i> Reschedule & Approve
+                            </button>
+                            <button onclick="window.viewPatientProfile('${appt.patientId}')" class="w-full bg-[#0f172a]/50 hover:bg-white/10 text-gray-400 hover:text-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center justify-center gap-2 shadow-sm">
+                                <i class="fa-regular fa-folder-open text-sm"></i> Patient History
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+
+            } catch (error) {
+                console.error("Error loading cancelled appointments:", error);
+                showToast("Error loading data", "error");
+            }
+            hideLoader();
+        }
+
+        // Call it initially
+        window.loadCancelledAppointments = loadCancelledAppointments;
+
+        // Export Database instance for global scripts
+        window.db = db;
+
+    </script>
+    
+    <!-- Local JS for UI and Modal Actions -->
+    <script>
+        let currentRescheduleApptId = null;
+        let currentPatientId = null;
+
+        // Modal Logic
+        window.openModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('div');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        window.closeModal = function(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); 
+        }
+
+        window.viewPatientProfile = (patientId) => {
+            window.location.href = `patient-profile.html?id=${patientId}`;
+        };
+
+        // Reschedule Init
+        window.initReschedule = (apptId, patientId) => {
+            currentRescheduleApptId = apptId;
+            currentPatientId = patientId;
+            openModal('reschedule-modal');
+        };
+
+        // Format Time
+        function formatTime12h(time24) {
+            let [h, m] = time24.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+
+        // Format Date to short Day
+        function getDayOfWeek(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const dateObj = new Date(y, m - 1, d);
+            return dateObj.toLocaleDateString('en-US', { weekday: 'short' }); 
+        }
+
+        // Use dynamic import to get Firestore functions locally
+        window.submitRescheduleAction = async () => {
+            if (!currentRescheduleApptId) return;
+            
+            const newDate = document.getElementById('reschedule-date').value;
+            const newTimeInput = document.getElementById('reschedule-time').value;
+            
+            if(!newDate || !newTimeInput) {
+                if(window.showToast) window.showToast("Please select a new date and time", "error");
+                return;
+            }
+
+            if(window.showLoader) window.showLoader();
+            closeModal('reschedule-modal');
+            
+            try {
+                // Dynamically import what we need since this script is non-module to allow global onClick mapping cleanly
+                const { doc, updateDoc, addDoc, collection, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
+                
+                const formattedTime = formatTime12h(newTimeInput);
+                const newDay = getDayOfWeek(newDate);
+
+                // 1. Update Appointment Status
+                await updateDoc(doc(window.db, "appointments", currentRescheduleApptId), {
+                    date: newDate,
+                    day: newDay,
+                    time: formattedTime,
+                    status: "Approved"
+                });
+
+                // 2. Notify Patient (Optional, creates a notification log)
+                if(currentPatientId) {
+                    await addDoc(collection(window.db, "notifications"), {
+                        userId: currentPatientId,
+                        title: "Appointment Rescheduled",
+                        message: `Your previously cancelled appointment has been rescheduled to ${newDate} at ${formattedTime}. It is now Approved.`,
+                        type: "appointment",
+                        isRead: false,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                
+                if(window.showToast) window.showToast("Appointment rescheduled and approved successfully!", "success");
+                
+                // Clear modal inputs
+                document.getElementById('reschedule-date').value = '';
+                document.getElementById('reschedule-time').value = '';
+                
+                // Reload list to remove approved card
+                if(window.loadCancelledAppointments) await window.loadCancelledAppointments(); 
+                
+            } catch (error) {
+                console.error("Error rescheduling:", error);
+                if(window.showToast) window.showToast("Failed to reschedule", "error");
+            }
+            if(window.hideLoader) window.hideLoader();
+        };
+    </script>
+</body>
+</html>

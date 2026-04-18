@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #4f46e5; }
+        
+        /* Profile Image Hover Edit Effect */
+        .profile-img-container:hover .edit-overlay { opacity: 1; }
+        .edit-overlay { opacity: 0; transition: opacity 0.2s ease; background: rgba(0,0,0,0.6); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: absolute; inset: 0; cursor: pointer; color: white;}
+
+        /* Password Eye Icon Wrapper */
+        .password-wrapper { position: relative; display: flex; align-items: center; }
+        .password-wrapper input { padding-right: 2.5rem; }
+        .toggle-password-btn { position: absolute; right: 12px; color: #94a3b8; background: transparent; border: none; cursor: pointer; padding: 4px; transition: color 0.3s; }
+        .toggle-password-btn:hover { color: #4f46e5; }
+
+        /* Toast Animation */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-enter { animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 leading-normal tracking-normal overflow-hidden antialiased">
+
+    <!-- Global Loader -->
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+
+    <!-- Notification Toast -->
+    <div id="toast-notification" class="fixed top-20 right-5 max-w-sm w-full bg-white border-l-4 border-indigo-500 rounded-xl shadow-2xl p-4 hidden z-[100] flex items-start gap-3 transition-all duration-300 transform translate-x-full opacity-0">
+        <div class="text-indigo-500 mt-0.5" id="toast-icon-wrap"><i class="fa-solid fa-circle-check text-xl"></i></div>
+        <div class="flex-1">
+            <h4 class="text-sm font-bold text-slate-800 mb-0.5" id="toast-title">Notification</h4>
+            <p class="text-xs text-slate-500" id="toast-message">Action performed successfully.</p>
+        </div>
+    </div>
+
+    <div class="flex h-screen">
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-[#1e1b4b] text-white w-64 flex-shrink-0 hidden sm:flex flex-col transition-all duration-300 z-20 absolute sm:relative h-full">
+            <div class="flex items-center justify-between h-16 px-6 bg-[#111827]">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-indigo-500/30">
+                        <img src="../img/CDHP_Logo.png" alt="CDHP Logo" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fa-solid fa-shield-halved text-indigo-900\'></i>';">
+                    </div>
+                    <span class="text-lg font-bold tracking-wide">CDHP Admin</span>
+                </div>
+                <!-- Mobile Close Button -->
+                <button id="closeSidebar" class="sm:hidden text-gray-400 hover:text-white focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                <a href="#" id="nav-dashboard" onclick="window.switchView('dashboard')" class="flex items-center gap-3 px-4 py-3 bg-indigo-600/30 text-indigo-300 border border-indigo-500/20 rounded-xl transition-colors nav-link">
+                    <i class="fas fa-chart-pie w-5 text-center"></i>
+                    <span class="font-medium text-sm">Dashboard</span>
+                </a>
+                <a href="#" id="nav-users" onclick="window.switchView('users')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors nav-link">
+                    <i class="fas fa-users w-5 text-center"></i>
+                    <span class="font-medium text-sm">Users Management</span>
+                </a>
+                <a href="#" id="nav-doctors" onclick="window.switchView('doctors')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors nav-link">
+                    <i class="fa-solid fa-user-doctor w-5 text-center"></i>
+                    <span class="font-medium text-sm">Doctors Directory</span>
+                </a>
+                <a href="#" id="nav-analytics" onclick="window.switchView('analytics')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors nav-link">
+                    <i class="fas fa-chart-bar w-5 text-center"></i>
+                    <span class="font-medium text-sm">Analytics</span>
+                </a>
+                <a href="#" id="nav-settings" onclick="window.switchView('settings')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors nav-link">
+                    <i class="fas fa-cog w-5 text-center"></i>
+                    <span class="font-medium text-sm">Settings</span>
+                </a>
+            </nav>
+            
+            <div class="p-4 bg-[#111827]">
+                <button id="logout-btn" class="flex items-center w-full gap-3 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-medium">
+                    <i class="fas fa-sign-out-alt w-5 text-center"></i>
+                    <span>Log Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            
+            <!-- Mobile overlay background -->
+            <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-10 hidden sm:hidden"></div>
+
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm border-b border-slate-200 h-[70px] flex items-center justify-between px-4 sm:px-6 z-10 shrink-0">
+                <div class="flex items-center">
+                    <!-- Mobile menu button -->
+                    <button id="openSidebar" class="text-slate-500 hover:text-indigo-600 focus:outline-none mr-4 sm:hidden">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <!-- Search bar -->
+                    <div class="relative hidden sm:block">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5">
+                            <i class="fas fa-search text-slate-400 text-sm"></i>
+                        </span>
+                        <input type="text" placeholder="Search users, doctors..." class="bg-slate-100/70 border border-slate-200 text-sm text-slate-700 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white w-64 transition-all">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-5">
+                    <!-- Notifications -->
+                    <button class="relative text-slate-400 hover:text-indigo-600 transition-colors">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    
+                    <!-- Profile Info & Upload -->
+                    <div class="flex items-center gap-3 border-l border-slate-200 pl-5">
+                        <div class="text-right hidden md:block">
+                            <p class="text-sm font-bold text-slate-800 leading-none mb-0.5" id="admin-name-display">Loading...</p>
+                            <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">System Admin</p>
+                        </div>
+                        
+                        <!-- Profile Image with Edit Overlay -->
+                        <div class="relative profile-img-container w-10 h-10 rounded-full border-2 border-indigo-100 shadow-sm overflow-hidden shrink-0" onclick="document.getElementById('admin-avatar-upload').click()">
+                            <img id="admin-profile-img" class="w-full h-full object-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Admin">
+                            <div class="edit-overlay"><i class="fa-solid fa-camera text-xs"></i></div>
+                        </div>
+                        <input type="file" id="admin-avatar-upload" class="hidden" accept="image/*">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Scrollable Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-4 sm:p-6 lg:p-8 custom-scroll relative">
+                
+                <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+                <!-- ================== SECTION: DASHBOARD ================== -->
+                <div id="section-dashboard" class="block">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-8 relative z-10 gap-4">
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">Dashboard Overview</h1>
+                            <p class="text-sm text-slate-500 mt-1">Here is the latest summary of platform activity.</p>
+                        </div>
+                        <button onclick="window.loadDashboardStats()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
+                            <i class="fas fa-sync-alt"></i> Refresh Stats
+                        </button>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 relative z-10">
+                        
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 flex items-center justify-between hover:shadow-md transition-all hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Users</p>
+                                <h3 class="text-2xl font-black text-slate-800" id="stat-users">0</h3>
+                            </div>
+                            <div class="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 text-xl border border-blue-100">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 flex items-center justify-between hover:shadow-md transition-all hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Doctors</p>
+                                <h3 class="text-2xl font-black text-slate-800" id="stat-doctors">0</h3>
+                            </div>
+                            <div class="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 text-xl border border-emerald-100">
+                                <i class="fa-solid fa-user-doctor"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 flex items-center justify-between hover:shadow-md transition-all hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Appointments</p>
+                                <h3 class="text-2xl font-black text-slate-800" id="stat-appointments">0</h3>
+                            </div>
+                            <div class="h-12 w-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500 text-xl border border-purple-100">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 flex items-center justify-between hover:shadow-md transition-all hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Pending Requests</p>
+                                <h3 class="text-2xl font-black text-slate-800" id="stat-pending">0</h3>
+                            </div>
+                            <div class="h-12 w-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 text-xl border border-orange-100">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts & Tables Section -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 relative z-10">
+                        
+                        <!-- Chart area -->
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 xl:col-span-2 flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-lg font-bold text-slate-800">Monthly Appointments Overview</h2>
+                                <select class="bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-1.5 outline-none text-slate-600">
+                                    <option>2026</option>
+                                    <option>2025</option>
+                                </select>
+                            </div>
+                            <div class="relative flex-1 min-h-[300px] w-full">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Recent Appointments Table -->
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 flex flex-col">
+                            <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-100">
+                                <h2 class="text-lg font-bold text-slate-800">Recent Appointments</h2>
+                            </div>
+                            
+                            <div class="overflow-x-auto flex-1">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th class="py-2.5 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">Patient</th>
+                                            <th class="py-2.5 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">Doctor</th>
+                                            <th class="py-2.5 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-activity-list" class="divide-y divide-slate-50">
+                                        <tr>
+                                            <td colspan="3" class="py-6 text-center text-sm text-slate-400 italic">Loading activity...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================== SECTION: USERS MANAGEMENT ================== -->
+                <div id="section-users" class="hidden h-full flex-col relative z-10 pb-8">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4">
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">Users Management</h1>
+                            <p class="text-sm text-slate-500 mt-1">Manage all patients and admin accounts.</p>
+                        </div>
+                        <div class="relative w-full sm:w-64 shrink-0">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="search-users" placeholder="Search users..." class="w-full bg-white border border-slate-200 text-sm text-slate-700 rounded-lg pl-9 pr-4 py-2.5 focus:outline-none focus:border-indigo-500 shadow-sm">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col min-h-[400px]">
+                        <div class="overflow-x-auto flex-1 custom-scroll">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 z-10 shadow-sm">
+                                    <tr>
+                                        <th class="py-3 px-5 text-[11px] font-bold uppercase tracking-wider text-slate-500">User Details</th>
+                                        <th class="py-3 px-5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="divide-y divide-slate-100">
+                                    <tr><td colspan="2" class="py-10 text-center text-sm text-slate-500">Loading users...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================== SECTION: DOCTORS DIRECTORY ================== -->
+                <div id="section-doctors" class="hidden h-full flex-col relative z-10 pb-8">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4">
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">Doctors Directory</h1>
+                            <p class="text-sm text-slate-500 mt-1">Manage registered doctors and their profiles.</p>
+                        </div>
+                        <div class="relative w-full sm:w-64 shrink-0">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="search-doctors" placeholder="Search doctors..." class="w-full bg-white border border-slate-200 text-sm text-slate-700 rounded-lg pl-9 pr-4 py-2.5 focus:outline-none focus:border-indigo-500 shadow-sm">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col min-h-[400px]">
+                        <div class="overflow-x-auto flex-1 custom-scroll">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 z-10 shadow-sm">
+                                    <tr>
+                                        <th class="py-3 px-5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Doctor Profile</th>
+                                        <th class="py-3 px-5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Specialization</th>
+                                        <th class="py-3 px-5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Hospital</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="doctors-table-body" class="divide-y divide-slate-100">
+                                    <tr><td colspan="3" class="py-10 text-center text-sm text-slate-500">Loading doctors...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================== SECTION: ANALYTICS ================== -->
+                <div id="section-analytics" class="hidden h-full flex-col relative z-10 overflow-y-auto custom-scroll pb-10">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4 shrink-0">
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">Platform Analytics</h1>
+                            <p class="text-sm text-slate-500 mt-1">Detailed insights into users and appointments.</p>
+                        </div>
+                        <button onclick="window.loadDashboardStats()" class="bg-white border border-slate-200 hover:bg-slate-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center justify-center gap-2 shrink-0">
+                            <i class="fas fa-sync-alt"></i> Refresh Data
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 shrink-0">
+                        <!-- User Roles Chart -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center">
+                            <h2 class="text-base font-bold text-slate-800 w-full mb-4">User Demographics</h2>
+                            <div class="relative w-full max-w-[250px] aspect-square">
+                                <canvas id="rolesChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Consultation Types Chart -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center">
+                            <h2 class="text-base font-bold text-slate-800 w-full mb-4">Consultation Modes</h2>
+                            <div class="relative w-full max-w-[250px] aspect-square">
+                                <canvas id="typesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Department Breakdown Chart -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 shrink-0">
+                        <h2 class="text-base font-bold text-slate-800 mb-4">Appointments by Department</h2>
+                        <div class="relative w-full h-[300px]">
+                            <canvas id="deptsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================== SECTION: SETTINGS ================== -->
+                <div id="section-settings" class="hidden h-full flex-col relative z-10 pb-8">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4">
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">Account Settings</h1>
+                            <p class="text-sm text-slate-500 mt-1">Manage your admin profile and security.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Personal Info -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h2 class="text-lg font-bold text-slate-800 mb-5 border-b border-slate-100 pb-3">Personal Information</h2>
+                            
+                            <form id="settings-personal-form">
+                                <div class="mb-5">
+                                    <label class="block text-[0.85rem] font-bold text-slate-700 mb-1.5">Full Name</label>
+                                    <div class="relative">
+                                        <i class="fa-regular fa-user absolute left-3.5 top-3.5 text-slate-400"></i>
+                                        <input type="text" id="settings-name" placeholder="E.g. Admin User" class="w-full bg-slate-50 border border-slate-200 text-slate-800 pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-[0.95rem]">
+                                    </div>
+                                </div>
+                                <div class="flex justify-end mt-4">
+                                    <button type="button" id="save-personal-btn" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-500/20 text-sm">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Security & Passwords -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h2 class="text-lg font-bold text-slate-800 mb-5 border-b border-slate-100 pb-3">Security & Password</h2>
+                            
+                            <form id="settings-security-form">
+                                <div class="mb-6 pb-6 border-b border-slate-100">
+                                    <label class="block text-[0.85rem] font-bold text-slate-700 mb-1.5">Email Address</label>
+                                    <div class="flex flex-col sm:flex-row gap-3">
+                                        <div class="relative flex-1">
+                                            <i class="fa-regular fa-envelope absolute left-3.5 top-3.5 text-slate-400"></i>
+                                            <input type="email" id="settings-email" class="w-full bg-slate-50 border border-slate-200 text-slate-800 pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-[0.95rem]">
+                                        </div>
+                                        <button type="button" id="update-email-btn" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-all shrink-0">Update Email</button>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-1.5">You will be asked to verify your identity before updating.</p>
+                                </div>
+
+                                <div class="space-y-4 mb-5">
+                                    <div>
+                                        <label class="block text-[0.85rem] font-bold text-slate-700 mb-1.5">Current Password</label>
+                                        <div class="password-wrapper">
+                                            <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400 z-10"></i>
+                                            <input type="password" id="current-password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 text-slate-800 pl-10 pr-10 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-[0.95rem]">
+                                            <button type="button" class="toggle-password-btn" data-target="current-password" tabindex="-1">
+                                                <i class="fa-regular fa-eye-slash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="mt-1 w-full text-right">
+                                            <button type="button" id="forgot-pwd-btn" class="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors bg-transparent border-none p-0 cursor-pointer">Forgot password?</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-[0.85rem] font-bold text-slate-700 mb-1.5">New Password (Min. 8 chars)</label>
+                                        <div class="password-wrapper">
+                                            <i class="fa-solid fa-key absolute left-3.5 top-3 text-slate-400 z-10"></i>
+                                            <input type="password" id="new-password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 text-slate-800 pl-10 pr-10 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-[0.95rem]">
+                                            <button type="button" class="toggle-password-btn" data-target="new-password" tabindex="-1">
+                                                <i class="fa-regular fa-eye-slash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-[0.85rem] font-bold text-slate-700 mb-1.5">Confirm New Password</label>
+                                        <div class="password-wrapper">
+                                            <i class="fa-solid fa-key absolute left-3.5 top-3 text-slate-400 z-10"></i>
+                                            <input type="password" id="confirm-password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 text-slate-800 pl-10 pr-10 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-[0.95rem]">
+                                            <button type="button" class="toggle-password-btn" data-target="confirm-password" tabindex="-1">
+                                                <i class="fa-regular fa-eye-slash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end">
+                                    <button type="button" id="update-pwd-btn" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all shadow-md shadow-blue-500/20 text-sm">Update Password</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Email Update Modal (For Admin Settings) -->
+    <div id="email-update-modal" class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="email-modal-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-slate-800">Verify Identity</h3>
+                <button type="button" id="close-email-modal" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-slate-500 text-sm mb-5">Please enter your current password to authorize this email update.</p>
+            
+            <div class="mb-6">
+                <div class="password-wrapper">
+                    <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400 z-10"></i>
+                    <input type="password" id="modal-current-password" placeholder="Current Password" class="w-full bg-slate-50 border border-slate-200 text-slate-800 pl-10 pr-10 py-2.5 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-[0.95rem]">
+                    <button type="button" class="toggle-password-btn" data-target="modal-current-password">
+                        <i class="fa-regular fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <button type="button" id="confirm-email-update-btn" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-500/20 text-sm">Verify & Update Email</button>
+        </div>
+    </div>
+
+    <!-- UI Interaction Scripts -->
+    <script>
+        // Initialize Global Chart Variables
+        window.rolesChartInst = null;
+        window.typesChartInst = null;
+        window.deptsChartInst = null;
+        window.revenueChartInst = null;
+
+        // Sidebar toggle logic for mobile view
+        const sidebar = document.getElementById('sidebar');
+        const openSidebarBtn = document.getElementById('openSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('hidden');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+
+        openSidebarBtn.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Chart.js base setup for Revenue
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)'); 
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)'); 
+
+            window.revenueChartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Appointments',
+                        data: [0,0,0,0,0,0,0,0,0,0,0,0], // default 0s
+                        borderColor: '#4f46e5', 
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#4f46e5',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e1b4b',
+                            padding: 12,
+                            titleFont: { size: 13, family: "'Roboto', sans-serif" },
+                            bodyFont: { size: 14, weight: 'bold', family: "'Roboto', sans-serif" },
+                            displayColors: false,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9', drawBorder: false },
+                            ticks: { color: '#94a3b8', font: {family: "'Roboto', sans-serif", size: 11}, precision: 0 }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#94a3b8', font: {family: "'Roboto', sans-serif", size: 11} }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                }
+            });
+
+            // Toggle Password Visibility Logic
+            document.querySelectorAll('.toggle-password-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent form submission
+                    const input = document.getElementById(this.getAttribute('data-target'));
+                    const icon = this.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.replace('fa-eye-slash', 'fa-eye');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.replace('fa-eye', 'fa-eye-slash');
+                    }
+                });
+            });
+        });
+
+        // Expose dynamic chart updaters
+        window.updateMainChart = function(dataArr) {
+            if(window.revenueChartInst) {
+                window.revenueChartInst.data.datasets[0].data = dataArr;
+                window.revenueChartInst.update();
+            }
+        }
+
+        window.renderAnalyticsCharts = function(roles, types, depts) {
+            // Roles Chart
+            if(window.rolesChartInst) window.rolesChartInst.destroy();
+            const ctxRoles = document.getElementById('rolesChart').getContext('2d');
+            window.rolesChartInst = new Chart(ctxRoles, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Patients', 'Doctors', 'Admins'],
+                    datasets: [{
+                        data: [roles.patient || 0, roles.doctor || 0, roles.admin || 0],
+                        backgroundColor: ['#0ea5e9', '#10b981', '#6366f1'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: {font: {family: "'Roboto', sans-serif"}} } }
+                }
+            });
+
+            // Types Chart
+            if(window.typesChartInst) window.typesChartInst.destroy();
+            const ctxTypes = document.getElementById('typesChart').getContext('2d');
+            window.typesChartInst = new Chart(ctxTypes, {
+                type: 'pie',
+                data: {
+                    labels: ['In-Person', 'Online'],
+                    datasets: [{
+                        data: [types['In-person'] || 0, types['Online'] || 0],
+                        backgroundColor: ['#f59e0b', '#8b5cf6'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: {font: {family: "'Roboto', sans-serif"}} } }
+                }
+            });
+
+            // Depts Chart
+            if(window.deptsChartInst) window.deptsChartInst.destroy();
+            const deptLabels = Object.keys(depts);
+            const deptValues = Object.values(depts);
+            const ctxDepts = document.getElementById('deptsChart').getContext('2d');
+            window.deptsChartInst = new Chart(ctxDepts, {
+                type: 'bar',
+                data: {
+                    labels: deptLabels,
+                    datasets: [{
+                        label: 'Appointments',
+                        data: deptValues,
+                        backgroundColor: '#14b8a6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0, color: '#94a3b8' }, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        // View Switcher Logic
+        window.switchView = function(viewName) {
+            // Hide all sections
+            ['dashboard', 'users', 'doctors', 'analytics', 'settings'].forEach(nav => {
+                const sec = document.getElementById(`section-${nav}`);
+                if(sec) {
+                    sec.classList.add('hidden');
+                    sec.classList.remove('block', 'flex');
+                }
+            });
+
+            // Show target section
+            const targetSec = document.getElementById(`section-${viewName}`);
+            if(targetSec) {
+                targetSec.classList.remove('hidden');
+                if(viewName === 'dashboard') targetSec.classList.add('block');
+                else targetSec.classList.add('flex');
+            }
+
+            // Update nav active states
+            ['dashboard', 'users', 'doctors', 'analytics', 'settings'].forEach(nav => {
+                const el = document.getElementById(`nav-${nav}`);
+                if (!el) return;
+                if(nav === viewName) {
+                    el.className = "flex items-center gap-3 px-4 py-3 bg-indigo-600/30 text-indigo-300 border border-indigo-500/20 rounded-xl transition-colors nav-link";
+                } else {
+                    el.className = "flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors nav-link";
+                }
+            });
+
+            // If on mobile, close sidebar after clicking
+            if(window.innerWidth < 640) {
+                toggleSidebar();
+            }
+        }
+    </script>
+
+    <!-- FIREBASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, limit, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let allSystemUsers = []; 
+
+        // Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        window.showToast = function(title, message, isError = false) {
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-message').textContent = message;
+
+            if (isError) {
+                toast.classList.replace('border-indigo-500', 'border-red-500');
+                document.getElementById('toast-icon-wrap').classList.replace('text-indigo-500', 'text-red-500');
+                document.getElementById('toast-icon-wrap').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-xl"></i>';
+            } else {
+                toast.classList.replace('border-red-500', 'border-indigo-500');
+                document.getElementById('toast-icon-wrap').classList.replace('text-red-500', 'text-indigo-500');
+                document.getElementById('toast-icon-wrap').innerHTML = '<i class="fa-solid fa-circle-check text-xl"></i>';
+            }
+
+            toast.classList.remove('hidden');
+            toast.classList.add('toast-enter');
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('toast-enter');
+            }, 3000);
+        }
+
+        // Generate Initials helper
+        function getInitials(name) {
+            if(!name) return 'U';
+            let initials = name.match(/\b\w/g) || [];
+            initials = ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+            return initials || 'U';
+        }
+
+        // --- Cloudinary Upload ---
+        async function uploadFileToCloudinary(file) {
+            const cloudName = "dhcq8o9xq"; 
+            const uploadPreset = "cdhp_uploads"; 
+            const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", uploadPreset);
+
+            const response = await fetch(url, { method: "POST", body: formData });
+            const data = await response.json();
+            if (data.secure_url) return data.secure_url;
+            throw new Error(data.error.message);
+        }
+
+        // Load Initial Admin Data
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Populate Settings Form Base Values
+                document.getElementById('settings-email').value = user.email;
+                
+                try {
+                    const docSnap = await getDoc(doc(db, "users", user.uid));
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        
+                        // Set Sidebar/Header Info
+                        document.getElementById('admin-name-display').textContent = data.name || "Admin User";
+                        document.getElementById('settings-name').value = data.name || "";
+                        
+                        if(data.profileImageUrl) {
+                            document.getElementById('admin-profile-img').src = data.profileImageUrl;
+                        } else {
+                            document.getElementById('admin-profile-img').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'Admin')}&background=4f46e5&color=fff`;
+                        }
+                    }
+                    
+                    await window.loadDashboardStats();
+                    await loadRecentAppointments();
+                } catch (err) {
+                    console.error(err);
+                }
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.href = '../src/index.html';
+            });
+        });
+
+        // Profile Picture Upload Logic
+        document.getElementById('admin-avatar-upload').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showLoader();
+            try {
+                const imgUrl = await uploadFileToCloudinary(file);
+                await updateDoc(doc(db, "users", currentUser.uid), { profileImageUrl: imgUrl });
+                document.getElementById('admin-profile-img').src = imgUrl;
+                showToast("Success", "Profile picture updated!");
+            } catch (err) {
+                console.error(err);
+                showToast("Error", "Failed to update profile picture.", true);
+            }
+            hideLoader();
+            e.target.value = '';
+        });
+
+        // Fetch Dashboard Stats & Analytics dynamically
+        window.loadDashboardStats = async function() {
+            showLoader();
+            try {
+                // Fetch All Users
+                const usersSnap = await getDocs(collection(db, "users"));
+                allSystemUsers = [];
+                
+                let roleData = { patient: 0, doctor: 0, admin: 0 };
+                
+                usersSnap.forEach(doc => {
+                    const data = doc.data();
+                    allSystemUsers.push({ id: doc.id, ...data });
+                    
+                    if(data.role === 'doctor') roleData.doctor++;
+                    else if(data.role === 'admin') roleData.admin++;
+                    else roleData.patient++; 
+                });
+
+                document.getElementById('stat-users').textContent = (roleData.patient + roleData.admin).toLocaleString(); 
+                document.getElementById('stat-doctors').textContent = roleData.doctor.toLocaleString();
+
+                // Fetch Appointments Data
+                const apptSnap = await getDocs(collection(db, "appointments"));
+                let apptCount = 0;
+                let pendingCount = 0;
+                let typeData = { 'In-person': 0, 'Online': 0 };
+                let deptData = {};
+                let monthlyData = new Array(12).fill(0);
+                const currentYear = new Date().getFullYear();
+
+                apptSnap.forEach(doc => {
+                    apptCount++;
+                    const data = doc.data();
+                    
+                    if(data.status === 'Pending') pendingCount++;
+
+                    // For Analytics: Consult Types
+                    if(data.type === 'Online' || data.type === 'Online Video') typeData['Online']++;
+                    else typeData['In-person']++;
+
+                    // For Analytics: Dept Breakdown
+                    const dept = data.department || 'Unspecified';
+                    deptData[dept] = (deptData[dept] || 0) + 1;
+
+                    // For Analytics: Monthly Trend
+                    if(data.createdAt) {
+                        const dateObj = data.createdAt.toDate();
+                        if(dateObj.getFullYear() === currentYear) {
+                            monthlyData[dateObj.getMonth()]++;
+                        }
+                    }
+                });
+
+                document.getElementById('stat-appointments').textContent = apptCount.toLocaleString();
+                document.getElementById('stat-pending').textContent = pendingCount.toLocaleString();
+
+                // Call the global chart render functions
+                window.updateMainChart(monthlyData);
+                window.renderAnalyticsCharts(roleData, typeData, deptData);
+
+                // Render Tables for Users and Doctors
+                renderUsersTable();
+                renderDoctorsTable();
+
+            } catch (error) {
+                console.error("Error loading stats:", error);
+            }
+            hideLoader();
+        }
+
+        // --- Render Users Management Table ---
+        function renderUsersTable(searchQuery = '') {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            
+            const filteredUsers = allSystemUsers.filter(u => 
+                u.role !== 'doctor' && 
+                (!searchQuery || (u.name && u.name.toLowerCase().includes(searchQuery.toLowerCase())) || (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase())))
+            );
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="2" class="py-10 text-center text-sm text-slate-500 italic">No users found.</td></tr>`;
+                return;
+            }
+
+            filteredUsers.forEach(user => {
+                const avatar = user.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=e2e8f0&color=475569`;
+                const roleBadge = user.role === 'admin' 
+                    ? `<span class="px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-md uppercase tracking-wide">Admin</span>`
+                    : `<span class="px-2 py-1 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-md uppercase tracking-wide">Patient</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-5 border-b border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <img src="${avatar}" alt="Avatar" class="w-9 h-9 rounded-full object-cover shadow-sm shrink-0">
+                            <span class="text-sm font-bold text-slate-800">${user.name || 'Unnamed User'}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-5 border-b border-slate-100">
+                        ${roleBadge}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Render Doctors Directory Table ---
+        function renderDoctorsTable(searchQuery = '') {
+            const tbody = document.getElementById('doctors-table-body');
+            tbody.innerHTML = '';
+            
+            const filteredDoctors = allSystemUsers.filter(u => 
+                u.role === 'doctor' && 
+                (!searchQuery || (u.name && u.name.toLowerCase().includes(searchQuery.toLowerCase())) || (u.department && u.department.toLowerCase().includes(searchQuery.toLowerCase())))
+            );
+
+            if (filteredDoctors.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="py-10 text-center text-sm text-slate-500 italic">No doctors found.</td></tr>`;
+                return;
+            }
+
+            filteredDoctors.forEach(docData => {
+                const avatar = docData.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(docData.name || 'Dr')}&background=ccfbf1&color=0f766e`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-5 border-b border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <img src="${avatar}" alt="Avatar" class="w-9 h-9 rounded-full object-cover shadow-sm shrink-0">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-slate-800">${docData.name || 'Unnamed Doctor'}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-5 border-b border-slate-100">
+                        <span class="inline-flex items-center gap-1.5 px-2 py-1 bg-teal-50 text-teal-700 text-xs font-medium rounded-md border border-teal-100">
+                            <i class="fa-solid fa-stethoscope text-[10px]"></i> ${docData.department || 'General'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-5 border-b border-slate-100 text-sm text-slate-600">
+                        <i class="fa-regular fa-building text-slate-400 mr-1"></i> ${docData.currentHospital || 'Not Specified'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Search Listeners
+        document.getElementById('search-users').addEventListener('input', (e) => {
+            renderUsersTable(e.target.value);
+        });
+        document.getElementById('search-doctors').addEventListener('input', (e) => {
+            renderDoctorsTable(e.target.value);
+        });
+
+        // Fetch Recent Appointments (Dashboard Table)
+        async function loadRecentAppointments() {
+            try {
+                const q = query(collection(db, "appointments"));
+                const querySnapshot = await getDocs(q);
+                
+                let appts = [];
+                querySnapshot.forEach(doc => {
+                    appts.push({ id: doc.id, ...doc.data() });
+                });
+
+                appts.sort((a, b) => {
+                    const tA = a.createdAt ? a.createdAt.toMillis() : 0;
+                    const tB = b.createdAt ? b.createdAt.toMillis() : 0;
+                    return tB - tA;
+                });
+
+                const recentAppts = appts.slice(0, 5); 
+                const tbody = document.getElementById('recent-activity-list');
+                tbody.innerHTML = '';
+
+                if(recentAppts.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-sm text-slate-400 italic">No recent appointments found.</td></tr>`;
+                    return;
+                }
+
+                for(let appt of recentAppts) {
+                    let patientName = "Unknown";
+                    if(appt.patientId) {
+                        const pSnap = await getDoc(doc(db, "users", appt.patientId));
+                        if(pSnap.exists()) patientName = pSnap.data().name || "Unknown";
+                    }
+
+                    const initials = getInitials(patientName);
+                    
+                    let badgeClass = 'bg-slate-100 text-slate-700';
+                    if(appt.status === 'Completed') badgeClass = 'bg-emerald-100 text-emerald-700';
+                    else if(appt.status === 'Approved') badgeClass = 'bg-blue-100 text-blue-700';
+                    else if(appt.status === 'Pending') badgeClass = 'bg-amber-100 text-amber-700';
+                    else if(appt.status === 'Cancelled') badgeClass = 'bg-red-100 text-red-700';
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-50 transition-colors';
+                    tr.innerHTML = `
+                        <td class="py-3 px-3 border-b border-slate-50">
+                            <div class="flex items-center gap-2.5">
+                                <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">${initials}</div>
+                                <span class="text-sm font-bold text-slate-800 truncate max-w-[120px]">${patientName}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-3 border-b border-slate-50 text-sm text-slate-600 font-medium truncate max-w-[120px]">
+                            ${appt.doctorName || 'N/A'}
+                        </td>
+                        <td class="py-3 px-3 border-b border-slate-50 text-right">
+                            <span class="px-2 py-1 ${badgeClass} text-[10px] font-bold rounded-md uppercase tracking-wide">${appt.status || 'Unknown'}</span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+
+            } catch (error) {
+                console.error("Error loading recent activity:", error);
+                document.getElementById('recent-activity-list').innerHTML = `<tr><td colspan="3" class="py-6 text-center text-sm text-red-500 italic">Failed to load activity.</td></tr>`;
+            }
+        }
+
+        // ================== SETTINGS LOGIC ==================
+
+        // 1. Save Personal Info (Name)
+        document.getElementById('save-personal-btn').addEventListener('click', async () => {
+            try {
+                showLoader();
+                const updatedName = document.getElementById('settings-name').value;
+                if(!updatedName.trim()) {
+                    showToast("Error", "Name cannot be empty.", true);
+                    hideLoader();
+                    return;
+                }
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    name: updatedName
+                });
+                hideLoader();
+                showToast("Success", "Profile updated successfully.");
+                
+                // Update header dynamically
+                const headerName = document.getElementById('admin-name-display');
+                if (headerName) headerName.textContent = updatedName;
+            } catch (error) {
+                hideLoader();
+                console.error(error);
+                showToast("Error", "Failed to update profile.", true);
+            }
+        });
+
+        // 2. Email Update Modal Logic
+        const emailModal = document.getElementById('email-update-modal');
+        const emailModalCard = document.getElementById('email-modal-card');
+
+        function openEmailModal() {
+            emailModal.classList.remove('pointer-events-none', 'opacity-0');
+            emailModal.classList.add('opacity-100');
+            emailModalCard.classList.remove('scale-95');
+            emailModalCard.classList.add('scale-100');
+        }
+
+        function closeEmailModal() {
+            emailModal.classList.remove('opacity-100');
+            emailModal.classList.add('pointer-events-none', 'opacity-0');
+            emailModalCard.classList.remove('scale-100');
+            emailModalCard.classList.add('scale-95');
+            document.getElementById('modal-current-password').value = '';
+        }
+
+        document.getElementById('close-email-modal').addEventListener('click', closeEmailModal);
+
+        document.getElementById('update-email-btn').addEventListener('click', () => {
+            const newEmail = document.getElementById('settings-email').value;
+
+            if (!newEmail || newEmail.trim() === '') {
+                showToast("Error", "Please enter a valid email.", true);
+                return;
+            }
+            if (newEmail === currentUser.email) {
+                showToast("Notice", "This is already your current email.");
+                return;
+            }
+
+            openEmailModal();
+        });
+
+        document.getElementById('confirm-email-update-btn').addEventListener('click', async () => {
+            const currentPwd = document.getElementById('modal-current-password').value;
+            const newEmail = document.getElementById('settings-email').value;
+
+            if (!currentPwd) {
+                showToast("Error", "Please enter your current password.", true);
+                return;
+            }
+
+            try {
+                showLoader();
+                const credential = EmailAuthProvider.credential(currentUser.email, currentPwd);
+                await reauthenticateWithCredential(currentUser, credential);
+                
+                await verifyBeforeUpdateEmail(currentUser, newEmail);
+                await updateDoc(doc(db, "users", currentUser.uid), { email: newEmail });
+                
+                hideLoader();
+                closeEmailModal();
+                showToast("Success", "Verification link sent to new email.");
+            } catch (error) {
+                hideLoader();
+                console.error(error);
+                if(error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    showToast("Error", "Incorrect current password.", true);
+                } else {
+                    showToast("Error", "Failed to update email.", true);
+                }
+            }
+        });
+
+        // 3. Update Password
+        document.getElementById('update-pwd-btn').addEventListener('click', async () => {
+            const currentPwd = document.getElementById('current-password').value;
+            const newPwd = document.getElementById('new-password').value;
+            const confirmPwd = document.getElementById('confirm-password').value;
+
+            if (!currentPwd || !newPwd || !confirmPwd) {
+                showToast("Error", "Please fill all password fields.", true);
+                return;
+            }
+            if (newPwd.length < 8) {
+                showToast("Error", "New password must be min 8 chars.", true);
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                showToast("Error", "New passwords do not match.", true);
+                return;
+            }
+
+            try {
+                showLoader();
+                const credential = EmailAuthProvider.credential(currentUser.email, currentPwd);
+                await reauthenticateWithCredential(currentUser, credential);
+                
+                await updatePassword(currentUser, newPwd);
+                hideLoader();
+                showToast("Success", "Password updated successfully!");
+                document.getElementById('settings-security-form').reset();
+                document.getElementById('settings-email').value = currentUser.email; // restore email value
+            } catch (error) {
+                hideLoader();
+                console.error(error);
+                if(error.code === 'auth/invalid-credential') showToast("Error", "Incorrect current password.", true);
+                else showToast("Error", "Failed to update password.", true);
+            }
+        });
+
+        // 4. Forgot Password
+        document.getElementById('forgot-pwd-btn').addEventListener('click', async () => {
+            if (!currentUser || !currentUser.email) {
+                showToast("Error", "Email address not found.", true);
+                return;
+            }
+            try {
+                showLoader();
+                await sendPasswordResetEmail(auth, currentUser.email);
+                hideLoader();
+                showToast("Success", "Password reset email sent!");
+            } catch (error) {
+                hideLoader();
+                console.error(error);
+                showToast("Error", "Failed to send reset email.", true);
+            }
+        });
+
+    </script>
+</body>
+</html>

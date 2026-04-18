@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDHP-Dashboard</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    
+    <style>
+        /* =========================================
+           1. CSS Variables (Design System)
+           ========================================= */
+        :root {
+            --color-primary: #0891b2;       /* Cyan 600 */
+            --color-primary2: #164e63;      /* Cyan 900 */
+            --primary-light: #cffafe;       /* Cyan 100 */
+            --color-accent: #06b6d4;        /* Cyan 500 */
+            
+            --bg-body: #f0f2f5;
+            --bg-surface: #ffffff;
+            
+            --text-main: #1f2937;     /* Gray 800 */
+            --text-muted: #6b7280;    /* Gray 500 */
+            --text-light: #9ca3af;    /* Gray 400 */
+            
+            --border-color: #e5e7eb;  /* Gray 200 */
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --transition: all 0.3s ease;
+        }
+
+        /* =========================================
+           2. Reset & Base Styles
+           ========================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; }
+        button { border: none; background: none; cursor: pointer; font-family: inherit; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        /* =========================================
+           3. Dashboard Layout & Content
+           ========================================= */
+        .main-content {
+            /* Added 90px top padding to ensure the external header doesn't overlap the content */
+            padding: 90px 24px 24px 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1; 
+        }
+
+        .dashboard-gap { display: flex; flex-direction: column; gap: 24px; }
+
+        /* Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--color-primary2) 0%, var(--color-primary) 100%);
+            border-radius: 16px;
+            padding: 32px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-text { position: relative; z-index: 2; max-width: 600px; }
+        .welcome-text h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .welcome-text p { color: var(--primary-light); font-size: 0.95rem; line-height: 1.5; }
+
+        .welcome-stats { position: relative; z-index: 2; display: flex; gap: 16px; }
+        .stat-box {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .stat-box h3 { font-size: 2rem; font-weight: 700; margin-bottom: 4px; }
+        .stat-box p { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary-light); }
+
+        .banner-bg-pattern { position: absolute; right: -50px; top: -50px; opacity: 0.1; width: 400px; height: 400px; pointer-events: none; }
+
+        /* Quick Actions (Modern Premium Grid) */
+        .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--text-main); }
+        
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .action-card {
+            background-color: var(--bg-surface);
+            padding: 32px 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-card:hover { transform: translateY(-8px); }
+        
+        .action-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2.2rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .action-card:hover .action-icon-wrapper { transform: scale(1.1) rotate(5deg); }
+        .action-card h3 { font-size: 1.15rem; font-weight: 700; color: var(--text-main); transition: color 0.3s ease; }
+
+        /* Action Cards Color Variants */
+        .card-blue { box-shadow: 0 4px 12px rgba(2, 132, 199, 0.03); }
+        .card-blue .action-icon-wrapper { background-color: #f0f9ff; color: #0284c7; }
+        .card-blue:hover { border-color: #0284c7; box-shadow: 0 0 0 4px #bae6fd, 0 12px 24px -8px rgba(2, 132, 199, 0.3); }
+        .card-blue:hover .action-icon-wrapper { background-color: #0284c7; color: #ffffff; }
+        .card-blue:hover h3 { color: #0284c7; }
+
+        .card-green { box-shadow: 0 4px 12px rgba(5, 150, 105, 0.03); }
+        .card-green .action-icon-wrapper { background-color: #ecfdf5; color: #059669; }
+        .card-green:hover { border-color: #059669; box-shadow: 0 0 0 4px #a7f3d0, 0 12px 24px -8px rgba(5, 150, 105, 0.3); }
+        .card-green:hover .action-icon-wrapper { background-color: #059669; color: #ffffff; }
+        .card-green:hover h3 { color: #059669; }
+
+        .card-purple { box-shadow: 0 4px 12px rgba(124, 58, 237, 0.03); }
+        .card-purple .action-icon-wrapper { background-color: #f5f3ff; color: #7c3aed; }
+        .card-purple:hover { border-color: #7c3aed; box-shadow: 0 0 0 4px #ddd6fe, 0 12px 24px -8px rgba(124, 58, 237, 0.3); }
+        .card-purple:hover .action-icon-wrapper { background-color: #7c3aed; color: #ffffff; }
+        .card-purple:hover h3 { color: #7c3aed; }
+
+        .card-orange { box-shadow: 0 4px 12px rgba(217, 119, 6, 0.03); }
+        .card-orange .action-icon-wrapper { background-color: #fffbeb; color: #d97706; }
+        .card-orange:hover { border-color: #d97706; box-shadow: 0 0 0 4px #fde68a, 0 12px 24px -8px rgba(217, 119, 6, 0.3); }
+        .card-orange:hover .action-icon-wrapper { background-color: #d97706; color: #ffffff; }
+        .card-orange:hover h3 { color: #d97706; }
+
+        .card-red { box-shadow: 0 4px 12px rgba(225, 29, 72, 0.03); }
+        .card-red .action-icon-wrapper { background-color: #fff1f2; color: #e11d48; }
+        .card-red:hover { border-color: #e11d48; box-shadow: 0 0 0 4px #fecdd3, 0 12px 24px -8px rgba(225, 29, 72, 0.3); }
+        .card-red:hover .action-icon-wrapper { background-color: #e11d48; color: #ffffff; }
+        .card-red:hover h3 { color: #e11d48; }
+
+        .card-indigo { box-shadow: 0 4px 12px rgba(79, 70, 229, 0.03); }
+        .card-indigo .action-icon-wrapper { background-color: #eef2ff; color: #4f46e5; }
+        .card-indigo:hover { border-color: #4f46e5; box-shadow: 0 0 0 4px #c7d2fe, 0 12px 24px -8px rgba(79, 70, 229, 0.3); }
+        .card-indigo:hover .action-icon-wrapper { background-color: #4f46e5; color: #ffffff; }
+        .card-indigo:hover h3 { color: #4f46e5; }
+
+        .card-pink { box-shadow: 0 4px 12px rgba(220, 38, 38, 0.03); }
+        .card-pink .action-icon-wrapper { background-color: #fef2f2; color: #dc2626; }
+        .card-pink:hover { border-color: #dc2626; box-shadow: 0 0 0 4px #fecaca, 0 12px 24px -8px rgba(220, 38, 38, 0.3); }
+        .card-pink:hover .action-icon-wrapper { background-color: #dc2626; color: #ffffff; }
+        .card-pink:hover h3 { color: #dc2626; }
+
+        /* Main Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        /* Widgets/Cards */
+        .widget-card {
+            background: var(--bg-surface);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            height: 100%;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+        .widget-header h2 { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px;}
+        .widget-header h2 i { color: var(--color-primary); }
+        .link-text { color: var(--color-primary); font-size: 0.85rem; font-weight: 500; }
+        .link-text:hover { text-decoration: underline; }
+
+        /* Appointment Item */
+        .appointment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            transition: var(--transition);
+        }
+        .appointment-item:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        
+        .apt-info-wrapper { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
+        .apt-date {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 60px;
+            text-align: center;
+            padding: 8px 0;
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
+        }
+        .apt-date .month { display: block; font-size: 0.75rem; color: #ef4444; font-weight: 700; text-transform: uppercase;}
+        .apt-date .day { display: block; font-size: 1.2rem; font-weight: 700; color: var(--text-main); }
+        
+        .apt-details { flex: 1; min-width: 0; }
+        .apt-details h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .apt-details .spec { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .apt-details .location { font-size: 0.75rem; color: var(--color-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        
+        .apt-actions { text-align: right; flex-shrink: 0; }
+        .apt-time { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; display: block;}
+        .btn-group { display: flex; gap: 8px; justify-content: flex-end; }
+        
+        .btn-outline {
+            background: #fff; border: 1px solid var(--border-color); color: var(--text-main);
+            padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; transition: var(--transition);
+        }
+        .btn-outline:hover { background: var(--bg-body); }
+        
+        .btn-solid {
+            background: var(--color-primary); color: #fff; border: 1px solid var(--color-primary);
+            padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; transition: var(--transition);
+        }
+        .btn-solid:hover { background: var(--color-primary2); }
+
+        /* Record List */
+        .record-list { display: flex; flex-direction: column; gap: 12px; }
+        .record-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .record-item:hover { background-color: var(--bg-body); border-color: var(--border-color); }
+        
+        .record-icon {
+            width: 40px; height: 40px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 12px; flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+        .record-info { flex: 1; min-width: 0; }
+        .record-info h4 { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .record-info p { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+        .record-action { color: var(--text-light); padding: 0 8px; transition: var(--transition); border: none; background: none; cursor: pointer; }
+        .record-item:hover .record-action { color: var(--color-primary); }
+        
+        .btn-full-width {
+            width: 100%; display: block; text-align: center; color: var(--color-primary);
+            font-size: 0.85rem; font-weight: 500; padding: 12px 0 0 0; margin-top: 16px;
+            border-top: 1px solid var(--border-color); transition: var(--transition);
+        }
+        .btn-full-width:hover { text-decoration: underline; }
+
+        /* Loader & Toast Styles */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #0891b2; }
+
+        /* Media Queries */
+        @media (max-width: 992px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .welcome-banner { flex-direction: column; text-align: center; gap: 20px;}
+            .welcome-text { margin-bottom: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .quick-actions-grid { grid-template-columns: 1fr 1fr; }
+            .appointment-item { flex-direction: column; align-items: stretch; gap: 16px; }
+            .apt-actions { text-align: left; width: 100%; }
+            .btn-group { justify-content: flex-start; width: 100%; }
+            .btn-group button { flex: 1; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-spinner fa-spin"></i></div>
+    <div id="header"></div>
+
+    <!-- Main Dashboard Content -->
+    <main class="main-content">
+        <div class="dashboard-gap">
+            
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <svg class="banner-bg-pattern" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="200" cy="200" r="150" stroke="white" stroke-width="40"/>
+                    <circle cx="350" cy="50" r="100" stroke="white" stroke-width="20"/>
+                </svg>
+                
+                <div class="welcome-text">
+                    <h1 id="welcome-name">Welcome to CDHP, Patient!</h1>
+                    <p>Your unified health data, secure and accessible everywhere in Bangladesh. Manage your appointments, prescriptions, and records in one place.</p>
+                </div>
+                
+                <div class="welcome-stats">
+                    <div class="stat-box">
+                        <h3 id="stat-saved-reports">0</h3>
+                        <p>Saved Reports</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3 id="stat-upcoming-visits">0</h3>
+                        <p>Upcoming Visit</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Grid -->
+            <div>
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="quick-actions-grid">
+                    <!-- Find Doctor -->
+                    <a href="find_doctor.html" class="action-card card-blue">
+                        <div class="action-icon-wrapper">
+                            <i class="fa-solid fa-stethoscope"></i>
+                        </div>
+                        <h3>Find Doctor</h3>
+                    </a>
+                    
+                    <!-- Book Appointment -->
+                    <a href="appointment.html" class="action-card card-green">
+                        <div class="action-icon-wrapper">
+                            <i class="fa-regular fa-calendar-plus"></i>
+                        </div>
+                        <h3>Book Appointments</h3>
+                    </a>
+                    
+                    <!-- Medical Records -->
+                    <a href="medical-records.html" class="action-card card-purple">
+                        <div class="action-icon-wrapper">
+                            <i class="fa-solid fa-file-medical"></i>
+                        </div>
+                        <h3>Medical Records</h3>
+                    </a>
+                    
+                    <!-- Billing & Payments -->
+                    <a href="billing-payments.html" class="action-card card-orange">
+                        <div class="action-icon-wrapper">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </div>
+                        <h3>Billing & Payments</h3>
+                    </a>
+                    
+                    <!-- Emergency Blood -->
+                    <a href="https://blood-donation-community.vercel.app" class="action-card card-red" target="_blank">
+                        <div class="action-icon-wrapper">
+                            <i class="fa-solid fa-droplet"></i>
+                        </div>
+                        <h3>Blood Bank</h3>
+                    </a>
+                    
+                    <!-- Telemedicine -->
+                    <a href="#" class="action-card card-indigo">
+                        <div class="action-icon-wrapper">
+                            <i class="fa-solid fa-laptop-medical"></i>
+                        </div>
+                        <h3>Telemedicine</h3>
+                    </a>
+                    
+                    <!-- Emergency/Ambulance -->
+                    <a href="#" class="action-card card-pink">
+                        <div class="action-icon-wrapper">
+                            <i class="fa-solid fa-truck-medical"></i>
+                        </div>
+                        <h3>Emergency</h3>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid (Split Layout) -->
+            <div class="dashboard-grid">
+                
+                <!-- Left Column -->
+                <div class="dashboard-gap">
+
+                    <!-- Upcoming Appointment Widget -->
+                    <div class="widget-card">
+                        <div class="widget-header">
+                            <h2><i class="fa-regular fa-calendar"></i> Next Upcoming Appointment</h2>
+                            <a href="appointment.html" class="link-text">View All</a>
+                        </div>
+                        
+                        <div id="upcoming-widget-content">
+                            <!-- Dynamic Content loaded via JS -->
+                            <div class="p-6 text-center text-gray-500 italic">Loading your appointments...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Recent Records Widget -->
+                    <div class="widget-card">
+                        <div class="widget-header">
+                            <h2><i class="fa-solid fa-file-prescription"></i> Recent Records</h2>
+                            <a href="medical-records.html" class="link-text" style="font-size: 1.2rem;"><i class="fa-solid fa-plus"></i></a>
+                        </div>
+                        
+                        <div class="record-list" id="recent-records-list">
+                            <!-- Dynamic Content loaded via JS -->
+                            <div class="p-4 text-center text-gray-500 italic">Loading records...</div>
+                        </div>
+                        
+                        <a href="medical-records.html" class="btn-full-width">View Full Medical History</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script src="js/load.js"></script>
+    
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        // Parse Time into Timestamp for accurate sorting
+        function getApptTimestamp(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return 0; 
+            try {
+                const [timePart, ampm] = timeStr.split(' ');
+                let [hours, mins] = timePart.split(':').map(Number);
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+                const [y, m, d] = dateStr.split('-').map(Number);
+                return new Date(y, m - 1, d, hours, mins).getTime();
+            } catch(e) { return 0; }
+        }
+
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + "y ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + "mo ago";
+            interval = seconds / 86400;
+            if (interval >= 1) return Math.floor(interval) + "d ago";
+            interval = seconds / 3600;
+            if (interval >= 1) return Math.floor(interval) + "h ago";
+            interval = seconds / 60;
+            if (interval >= 1) return Math.floor(interval) + "m ago";
+            return "Just now";
+        }
+
+        // --- File Download Helper for Cloudinary ---
+        window.downloadFile = function(url, filename) {
+            if (!url) return;
+            try {
+                const parts = url.split('/upload/');
+                if(parts.length === 2) {
+                    const downloadUrl = parts[0] + '/upload/fl_attachment/' + parts[1];
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = filename || 'download';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    window.open(url, '_blank');
+                }
+            } catch(e) {
+                console.error("Error downloading file:", e);
+                window.open(url, '_blank');
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadDashboardData();
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        async function loadDashboardData() {
+            showLoader();
+            try {
+                // 1. Fetch User Data (Name, Reports)
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                let reports = [];
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    const firstName = data.name ? data.name.split(' ')[0].toUpperCase() : 'PATIENT';
+                    document.getElementById('welcome-name').textContent = `Welcome to CDHP, ${firstName}!`;
+                    reports = data.reports || [];
+                }
+                
+                // Update Saved Reports Stat
+                document.getElementById('stat-saved-reports').textContent = reports.length < 10 ? `0${reports.length}` : reports.length;
+
+                // Render Recent Records
+                renderRecentRecords(reports);
+
+                // 2. Fetch Appointments
+                const q = query(
+                    collection(db, "appointments"), 
+                    where("patientId", "==", currentUser.uid)
+                );
+                const querySnapshot = await getDocs(q);
+                let appointments = [];
+
+                querySnapshot.forEach((doc) => {
+                    appointments.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Filter & Sort Upcoming (Approved and time > now)
+                const now = new Date().getTime();
+                const upcomingAppts = appointments.filter(a => {
+                    return a.status === 'Approved' && getApptTimestamp(a.date, a.time) > (now - (30 * 60000)); // Allow up to 30 mins past start time
+                });
+
+                upcomingAppts.sort((a, b) => getApptTimestamp(a.date, a.time) - getApptTimestamp(b.date, b.time));
+
+                // Update Upcoming Stat
+                document.getElementById('stat-upcoming-visits').textContent = upcomingAppts.length;
+
+                // Render Upcoming Widget
+                renderUpcomingWidget(upcomingAppts.length > 0 ? upcomingAppts[0] : null);
+
+            } catch (error) {
+                console.error("Error loading dashboard data:", error);
+            }
+            hideLoader();
+        }
+
+        function renderRecentRecords(reports) {
+            const listContainer = document.getElementById('recent-records-list');
+            listContainer.innerHTML = '';
+
+            if (reports.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="p-6 text-center text-gray-500 italic text-sm">
+                        You have no saved records. Upload them via Medical Records.
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by date descending
+            const sortedReports = [...reports].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const topReports = sortedReports.slice(0, 3); // Take top 3
+
+            topReports.forEach(report => {
+                const isPdf = report.fileName.toLowerCase().endsWith('.pdf');
+                const iconClass = isPdf ? 'fa-file-pdf' : 'fa-image';
+                const bgClass = isPdf ? 'background: #eff6ff; color: #3b82f6;' : 'background: #f0fdf4; color: #22c55e;';
+                const formattedDate = new Date(report.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                const item = document.createElement('div');
+                item.className = 'record-item';
+                item.onclick = () => window.open(report.url, '_blank');
+                
+                item.innerHTML = `
+                    <div class="record-icon" style="${bgClass}">
+                        <i class="fa-solid ${iconClass}"></i>
+                    </div>
+                    <div class="record-info">
+                        <h4 title="${report.fileName}">${report.fileName}</h4>
+                        <p>${formattedDate} • ${report.size}</p>
+                    </div>
+                    <button class="record-action" onclick="event.stopPropagation(); window.downloadFile('${report.url}', '${report.fileName}')" title="Download">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        function renderUpcomingWidget(appt) {
+            const widgetContent = document.getElementById('upcoming-widget-content');
+            
+            if (!appt) {
+                widgetContent.innerHTML = `
+                    <div class="p-8 flex flex-col items-center justify-center text-center border rounded-xl bg-gray-50 border-gray-100">
+                        <div class="w-12 h-12 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-xl mb-3">
+                            <i class="fa-regular fa-calendar-xmark"></i>
+                        </div>
+                        <h4 class="text-gray-600 font-bold mb-1">No Upcoming Appointments</h4>
+                        <p class="text-sm text-gray-500 mb-4">You do not have any confirmed appointments right now.</p>
+                        <a href="appointment.html" class="btn-solid" style="text-decoration: none;">Book Now</a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Parse Date for UI
+            const [y, m, d] = appt.date.split('-');
+            const dateObj = new Date(y, m - 1, d);
+            const monthShort = dateObj.toLocaleDateString('en-US', { month: 'short' });
+            const dayNum = dateObj.getDate();
+
+            widgetContent.innerHTML = `
+                <div class="appointment-item">
+                    <div class="apt-info-wrapper">
+                        <div class="apt-date">
+                            <span class="month">${monthShort}</span>
+                            <span class="day">${dayNum}</span>
+                        </div>
+                        <div class="apt-details">
+                            <h3>${appt.doctorName}</h3>
+                            <p class="spec">${appt.department}</p>
+                            <p class="location"><i class="fa-solid fa-location-dot"></i> ${appt.hospital}</p>
+                        </div>
+                    </div>
+                    <div class="apt-actions">
+                        <span class="apt-time"><i class="fa-regular fa-clock"></i> ${appt.time}</span>
+                        <div class="btn-group">
+                            <button onclick="window.location.href='appointment-details.html?id=${appt.id}'" class="btn-outline">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

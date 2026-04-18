@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+
+    <!-- Google Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&display=swap');
+    </style>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+    <!-- Tailwind Config for Custom Colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Section Animations */
+        .section { display: none; animation: fadeIn 0.3s ease-out forwards; }
+        .section.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tab Navigation (Matching Medical Records) */
+        .tabs-wrapper {
+            background: #ffffff;
+            padding: 8px;
+            border-radius: 100px;
+            display: inline-flex;
+            gap: 8px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #64748b;
+            background: transparent;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn i { font-size: 1.1rem; }
+        .tab-btn:hover:not(.active) { 
+            color: #0f766e; 
+            background-color: #f1f5f9; 
+        }
+        .tab-btn.active { 
+            background-color: #0d9488; 
+            color: #ffffff; 
+            box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3); 
+        }
+
+        /* Autocomplete Custom CSS */
+        .autocomplete-dropdown { 
+            position: absolute; top: 100%; left: 0; width: 100%; 
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; 
+            margin-top: 4px; z-index: 50; max-height: 250px; overflow-y: auto; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); display: none; 
+        }
+        .autocomplete-dropdown.show { display: block; }
+        
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #0d9488; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans pt-[70px] antialiased pb-12">
+
+    <!-- External Header Placeholder -->
+    <div id="header"></div>
+
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-spinner fa-spin"></i></div>
+
+    <!-- Main Container -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-4">
+        
+        <!-- GLOBAL PAGE HEADER -->
+        <div class="flex flex-col items-start justify-center h-[140px] mb-4">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-brand-50 text-brand-600 shadow-sm border border-brand-100 shrink-0">
+                    <i id="page-icon" class="fa-solid fa-stethoscope text-2xl md:text-3xl transition-all"></i>
+                </div>
+                <div class="flex flex-col text-left">
+                    <h1 id="page-title" class="text-2xl md:text-[1.75rem] font-extrabold text-slate-800 mb-0.5 tracking-tight transition-all leading-none">Schedule a Visit</h1>
+                    <p id="page-subtitle" class="text-slate-500 text-[0.85rem] md:text-sm transition-all m-0">Fill in the details below to book an appointment with our specialists.</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tabs-wrapper">
+                <button id="add-appointment-btn" class="tab-btn active">
+                    <i class="fa-solid fa-calendar-plus"></i> Book Appointment
+                </button>
+                <button id="history-appointment-btn" class="tab-btn">
+                    <i class="fa-solid fa-clock-rotate-left"></i> History
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 1: ADD APPOINTMENT -->
+        <div id="add-appointment-section" class="section active">
+            <div class="bg-white rounded-2xl p-6 md:p-8 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-200 border-t-4 border-t-brand-500 relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-brand-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+
+                <form id="appointment-form" class="relative z-10">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        
+                        <!-- Doctor Autocomplete -->
+                        <div class="relative md:col-span-2">
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1" for="appointment-doctor-name-input">Select Specialist / Doctor</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-3 text-slate-400"></i>
+                                <input type="text" id="appointment-doctor-name-input" class="w-full bg-slate-50 border border-slate-200 text-slate-800 pl-11 pr-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors text-[0.95rem]" placeholder="Search doctor by name..." autocomplete="off" required>
+                                <div id="appointment-doctor-suggestions" class="autocomplete-dropdown custom-scrollbar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Department (Readonly) -->
+                        <div>
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1">Department</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-stethoscope absolute left-4 top-3 text-slate-400"></i>
+                                <input type="text" id="appointment-department" class="w-full bg-slate-100/70 border border-slate-200 text-slate-500 pl-11 pr-4 py-2.5 rounded-xl cursor-not-allowed text-[0.95rem]" readonly placeholder="Auto-filled">
+                            </div>
+                        </div>
+
+                        <!-- Hospital (Readonly) -->
+                        <div>
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1">Hospital / Clinic</label>
+                            <div class="relative">
+                                <i class="fa-regular fa-building absolute left-4 top-3 text-slate-400"></i>
+                                <input type="text" id="appointment-hospital" class="w-full bg-slate-100/70 border border-slate-200 text-slate-500 pl-11 pr-4 py-2.5 rounded-xl cursor-not-allowed text-[0.95rem]" readonly placeholder="Auto-filled">
+                            </div>
+                        </div>
+
+                        <!-- Date -->
+                        <div>
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1" for="appointment-date">Preferred Date</label>
+                            <input type="date" id="appointment-date" class="w-full bg-slate-50 border border-slate-200 text-slate-800 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors text-[0.95rem]" required>
+                        </div>
+                        
+                        <!-- Auto-filled Day -->
+                        <div>
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1" for="appointment-day">Preferred Day</label>
+                            <div class="relative">
+                                <i class="fa-regular fa-calendar-days absolute left-4 top-3 text-slate-400"></i>
+                                <input type="text" id="appointment-day" class="w-full bg-slate-100/70 border border-slate-200 text-slate-500 pl-11 pr-4 py-2.5 rounded-xl cursor-not-allowed text-[0.95rem]" readonly placeholder="Auto-selected based on date">
+                            </div>
+                        </div>
+
+                        <!-- Time (Dynamic Slots) -->
+                        <div>
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1" for="appointment-time">Preferred Time</label>
+                            <div class="relative">
+                                <select id="appointment-time" class="w-full bg-slate-50 border border-slate-200 text-slate-800 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors text-[0.95rem] appearance-none" required>
+                                    <option value="" disabled selected>Select a date first</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-4 top-3.5 text-slate-400 text-sm pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <!-- Priority -->
+                        <div>
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1" for="appointment-priority">Priority Level</label>
+                            <div class="relative">
+                                <select id="appointment-priority" class="w-full bg-slate-50 border border-slate-200 text-slate-800 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors text-[0.95rem] appearance-none">
+                                    <option value="Normal">Normal</option>
+                                    <option value="Urgent">Urgent</option>
+                                    <option value="Very Urgent">Very Urgent</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-4 top-3.5 text-slate-400 text-sm pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <!-- Appointment Type (Custom Radio Cards) -->
+                        <div class="md:col-span-2 mt-1">
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-2">Consultation Type</label>
+                            <div class="flex gap-4">
+                                <div class="relative flex-1">
+                                    <input type="radio" id="type-in-person" name="appointment-type" value="In-person" class="peer sr-only" checked>
+                                    <label for="type-in-person" class="flex flex-col items-center justify-center w-full p-3 border-2 border-slate-100 rounded-xl cursor-pointer bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 transition-all shadow-sm">
+                                        <i class="fa-solid fa-hospital-user text-xl mb-1.5"></i>
+                                        <span class="font-bold text-[0.85rem]">In-Person Visit</span>
+                                    </label>
+                                </div>
+                                <div class="relative flex-1">
+                                    <input type="radio" id="type-online" name="appointment-type" value="Online" class="peer sr-only">
+                                    <label for="type-online" class="flex flex-col items-center justify-center w-full p-3 border-2 border-slate-100 rounded-xl cursor-pointer bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 transition-all shadow-sm">
+                                        <i class="fa-solid fa-video text-xl mb-1.5"></i>
+                                        <span class="font-bold text-[0.85rem]">Online Video</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estimated Fee -->
+                        <div>
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1">Estimated Fee</label>
+                            <div class="w-full bg-slate-50 border-2 border-dashed border-slate-300 text-slate-600 px-4 py-2 rounded-xl flex items-center h-[42px]">
+                                <div class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-600 flex items-center justify-center mr-2.5 shrink-0">
+                                    <i class="fa-solid fa-money-bill-wave text-[0.7rem]"></i>
+                                </div>
+                                <span id="appointment-fee" class="font-bold text-[0.95rem]">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Symptoms -->
+                        <div class="md:col-span-2">
+                            <label class="block text-[0.85rem] font-bold text-slate-700 mb-1" for="appointment-symptoms">Reason for Visit / Symptoms</label>
+                            <textarea id="appointment-symptoms" rows="2" class="w-full bg-slate-50 border border-slate-200 text-slate-800 px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors text-[0.95rem] resize-none" placeholder="Please describe your symptoms briefly..." required></textarea>
+                        </div>
+
+                    </div> 
+                    
+                    <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end">
+                        <button id="submit-appointment-btn" type="submit" class="w-full md:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-[0_4px_14px_0_rgba(20,184,166,0.39)] hover:shadow-[0_6px_20px_rgba(20,184,166,0.23)] hover:-translate-y-0.5 flex items-center justify-center gap-2 text-[0.95rem]">
+                            Confirm Appointment <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SECTION 2: APPOINTMENT HISTORY -->
+        <div id="history-appointment-section" class="section">
+            <div id="history-list-container" class="flex flex-col gap-4">
+                <!-- Javascript will inject items here -->
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Cancel Appointment Modal -->
+    <div id="cancel-modal" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-[#0f172a] border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform scale-95 transition-transform duration-300" id="cancel-modal-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Cancel Appointment</h3>
+                <button type="button" id="close-cancel-modal" class="text-slate-500 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-slate-400 text-sm mb-6">Are you sure you want to cancel this appointment? This action cannot be undone.</p>
+            
+            <div class="flex justify-end gap-3">
+                <button type="button" id="btn-dismiss-cancel" class="px-5 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 transition-colors text-[0.95rem]">No, Keep it</button>
+                <button type="button" id="btn-confirm-cancel" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-medium transition-all shadow-[0_0_15px_rgba(220,38,38,0.2)] text-[0.95rem]">Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message Toast -->
+    <div id="success-toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-brand-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 flex items-center gap-3 z-50 font-medium text-[0.95rem]">
+        <i class="fa-solid fa-circle-check text-lg" id="toast-icon"></i>
+        <span id="toast-message">Appointment requested successfully!</span>
+    </div>
+
+    <!-- External Script Load Placeholder -->
+    <script src="js/load.js"></script>
+
+    <!-- FIREBASE & LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, query, where, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Variables
+        let currentUser = null;
+        let allDoctors = [];
+        let selectedDoctorData = null;
+        let historyLoaded = false;
+
+        // DOM Elements
+        const els = {
+            form: document.getElementById('appointment-form'),
+            doctorInput: document.getElementById('appointment-doctor-name-input'),
+            doctorSuggestions: document.getElementById('appointment-doctor-suggestions'),
+            departmentInput: document.getElementById('appointment-department'),
+            hospitalInput: document.getElementById('appointment-hospital'),
+            feeDisplay: document.getElementById('appointment-fee'),
+            dateInput: document.getElementById('appointment-date'),
+            dayInput: document.getElementById('appointment-day'),
+            timeInput: document.getElementById('appointment-time'),
+            priorityInput: document.getElementById('appointment-priority'),
+            symptomsInput: document.getElementById('appointment-symptoms'),
+            
+            pageIcon: document.getElementById('page-icon'),
+            pageTitle: document.getElementById('page-title'),
+            pageSubtitle: document.getElementById('page-subtitle'),
+            
+            addBtn: document.getElementById('add-appointment-btn'),
+            historyBtn: document.getElementById('history-appointment-btn'),
+            addSection: document.getElementById('add-appointment-section'),
+            historySection: document.getElementById('history-appointment-section'),
+            historyContainer: document.getElementById('history-list-container'),
+            
+            toast: document.getElementById('success-toast'),
+            toastMsg: document.getElementById('toast-message'),
+            toastIcon: document.getElementById('toast-icon'),
+            loader: document.getElementById('global-loader')
+        };
+
+        // Helpers
+        const showLoader = () => els.loader.style.display = 'flex';
+        const hideLoader = () => els.loader.style.display = 'none';
+        
+        const showToast = (msg, isError = false) => {
+            els.toastMsg.textContent = msg;
+            
+            if (isError) {
+                els.toast.classList.replace('bg-brand-600', 'bg-red-500');
+                els.toastIcon.classList.replace('fa-circle-check', 'fa-circle-xmark');
+            } else {
+                els.toast.classList.replace('bg-red-500', 'bg-brand-600');
+                els.toastIcon.classList.replace('fa-circle-xmark', 'fa-circle-check');
+            }
+            
+            setTimeout(() => els.toast.classList.remove('translate-y-20', 'opacity-0'), 10);
+            setTimeout(() => {
+                els.toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        };
+
+        // --- 1. Init & Fetch Doctors ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await fetchAllDoctors();
+                
+                // Check if came from Get Appointment button
+                const urlParams = new URLSearchParams(window.location.search);
+                const docId = urlParams.get('doctorId');
+                if (docId) {
+                    const docInfo = allDoctors.find(d => d.id === docId);
+                    if (docInfo) {
+                        selectDoctor(docInfo);
+                    }
+                }
+            } else {
+                window.location.href = '../src/index.html';
+            }
+        });
+
+        async function fetchAllDoctors() {
+            showLoader();
+            try {
+                const snapshot = await getDocs(collection(db, "users"));
+                allDoctors = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.role === 'doctor') {
+                        allDoctors.push({
+                            id: doc.id,
+                            name: data.name || 'Unknown Doctor',
+                            department: data.department || 'Not Specified',
+                            hospital: data.currentHospital || 'Not Specified',
+                            image: data.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'Doc')}&background=0d9488&color=fff`,
+                            consultFeeInPerson: data.consultFeeInPerson || '',
+                            consultFeeOnline: data.consultFeeOnline || '',
+                            availability: data.availability || []
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching doctors:", error);
+            }
+            hideLoader();
+        }
+
+        // --- 2. Autocomplete & Selection Logic ---
+        els.doctorInput.addEventListener('input', () => {
+            const query = els.doctorInput.value.toLowerCase().trim();
+            els.doctorSuggestions.innerHTML = '';
+            
+            // Clear selection if typing again
+            selectedDoctorData = null;
+            els.departmentInput.value = '';
+            els.hospitalInput.value = '';
+            updateFeeDisplay();
+            updateTimeSlots();
+
+            if (query.length === 0) {
+                els.doctorSuggestions.classList.remove('show');
+                return;
+            }
+
+            const filteredData = allDoctors.filter(d => d.name.toLowerCase().includes(query));
+
+            if (filteredData.length > 0) {
+                els.doctorSuggestions.classList.add('show');
+                filteredData.forEach(doctor => {
+                    const item = document.createElement('div');
+                    item.className = 'px-4 py-2.5 border-b border-slate-100 cursor-pointer hover:bg-brand-50 flex items-center gap-3 transition-colors';
+                    item.innerHTML = `
+                        <div class="w-9 h-9 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                            <img src="${doctor.image}" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <div class="font-bold text-slate-800 text-[0.9rem]">${doctor.name}</div>
+                            <div class="text-[0.7rem] text-slate-500">${doctor.department} • ${doctor.hospital}</div>
+                        </div>
+                    `;
+                    item.addEventListener('click', () => {
+                        selectDoctor(doctor);
+                        els.doctorSuggestions.classList.remove('show');
+                    });
+                    els.doctorSuggestions.appendChild(item);
+                });
+            } else {
+                els.doctorSuggestions.classList.remove('show');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!els.doctorInput.contains(e.target) && !els.doctorSuggestions.contains(e.target)) {
+                els.doctorSuggestions.classList.remove('show');
+            }
+        });
+
+        function selectDoctor(doctor) {
+            selectedDoctorData = doctor;
+            els.doctorInput.value = doctor.name;
+            els.departmentInput.value = doctor.department;
+            els.hospitalInput.value = doctor.hospital;
+            
+            updateFeeDisplay();
+            updateTimeSlots();
+        }
+
+        // --- 3. Dynamic Fee Logic ---
+        function updateFeeDisplay() {
+            if (!selectedDoctorData) {
+                els.feeDisplay.textContent = '--';
+                els.feeDisplay.classList.remove('text-brand-700');
+                return;
+            }
+            const type = document.querySelector('input[name="appointment-type"]:checked').value;
+            const fee = type === 'In-person' ? selectedDoctorData.consultFeeInPerson : selectedDoctorData.consultFeeOnline;
+            
+            if (fee) {
+                els.feeDisplay.textContent = `৳${fee}`;
+                els.feeDisplay.classList.add('text-brand-700');
+            } else {
+                els.feeDisplay.textContent = 'Not set by doctor';
+                els.feeDisplay.classList.remove('text-brand-700');
+            }
+        }
+
+        document.querySelectorAll('input[name="appointment-type"]').forEach(radio => {
+            radio.addEventListener('change', updateFeeDisplay);
+        });
+
+        // --- 4. Date to Day & Dynamic Time Slots Logic ---
+        els.dateInput.addEventListener('change', (e) => {
+            const dateVal = e.target.value;
+            if(dateVal) {
+                const dateObj = new Date(dateVal);
+                // Get short day name (e.g., "Sat", "Sun") to match doctor availability format
+                const dayShort = dateObj.toLocaleDateString('en-US', { weekday: 'short' }); 
+                els.dayInput.value = dayShort;
+                updateTimeSlots();
+            } else {
+                els.dayInput.value = '';
+                updateTimeSlots();
+            }
+        });
+
+        // Time parsers
+        function parseTimeToMins(timeStr) {
+            const [time, modifier] = timeStr.split(' ');
+            let [hours, mins] = time.split(':').map(Number);
+            if (hours === 12) hours = 0;
+            if (modifier === 'PM') hours += 12;
+            return hours * 60 + mins;
+        }
+
+        function formatMinsToTime(mins) {
+            let h = Math.floor(mins / 60);
+            let m = mins % 60;
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
+        }
+
+        function updateTimeSlots() {
+            els.timeInput.innerHTML = '<option value="" disabled selected>Choose a slot</option>';
+            const dayStr = els.dayInput.value;
+
+            if (!selectedDoctorData) {
+                els.timeInput.innerHTML = '<option value="" disabled selected>Select a doctor first</option>';
+                return;
+            }
+            if (!dayStr) {
+                els.timeInput.innerHTML = '<option value="" disabled selected>Select a date first</option>';
+                return;
+            }
+            
+            if (!selectedDoctorData.availability || selectedDoctorData.availability.length === 0) {
+                els.timeInput.innerHTML = '<option value="" disabled selected>Doctor has no schedule set</option>';
+                return;
+            }
+
+            // Find matching schedule for the day
+            const matchingSch = selectedDoctorData.availability.find(s => s.days.includes(dayStr));
+            
+            if (!matchingSch) {
+                els.timeInput.innerHTML = '<option value="" disabled selected>Doctor not available on this day</option>';
+                return;
+            }
+
+            // Generate slots based on Start/End time and duration
+            const [startStr, endStr] = matchingSch.time.split(' - ');
+            const duration = parseInt(matchingSch.duration) || 20;
+
+            const startMins = parseTimeToMins(startStr);
+            const endMins = parseTimeToMins(endStr);
+
+            let slotsFound = false;
+            for(let m = startMins; m + duration <= endMins; m += duration) {
+                const slotStr = formatMinsToTime(m);
+                const opt = document.createElement('option');
+                opt.value = slotStr;
+                opt.textContent = slotStr;
+                els.timeInput.appendChild(opt);
+                slotsFound = true;
+            }
+
+            if (!slotsFound) {
+                els.timeInput.innerHTML = '<option value="" disabled selected>No valid slots</option>';
+            }
+        }
+
+        // --- 5. Submit Appointment ---
+        els.form.addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            if (!selectedDoctorData) {
+                showToast("Please select a valid doctor from the list.", true);
+                return;
+            }
+
+            showLoader();
+            try {
+                const typeVal = document.querySelector('input[name="appointment-type"]:checked').value;
+                const feeVal = typeVal === 'In-person' ? selectedDoctorData.consultFeeInPerson : selectedDoctorData.consultFeeOnline;
+
+                const apptData = {
+                    patientId: currentUser.uid,
+                    doctorId: selectedDoctorData.id,
+                    doctorName: selectedDoctorData.name,
+                    doctorImage: selectedDoctorData.image,
+                    department: selectedDoctorData.department,
+                    hospital: selectedDoctorData.hospital,
+                    date: els.dateInput.value,
+                    day: els.dayInput.value,
+                    time: els.timeInput.value,
+                    type: typeVal,
+                    fee: feeVal || 'Not Set',
+                    priority: els.priorityInput.value,
+                    symptoms: els.symptomsInput.value,
+                    status: 'Pending',
+                    createdAt: serverTimestamp()
+                };
+
+                //await addDoc(collection(db, "appointments"), apptData);
+
+                // Add this right after saving the appointment in appointment.html
+                await addDoc(collection(db, "notifications"), {
+                    userId: selectedDoctorData.id, // This sends the notification to the selected Doctor
+                    title: "New Appointment Request",
+                    message: "A new patient has requested an appointment.",
+                    type: "registration", // Matches the filter in header.js
+                    isRead: false,
+                    createdAt: serverTimestamp()
+                });
+                
+                hideLoader();
+                showToast("Appointment requested successfully!");
+                
+                // Reset Form
+                els.form.reset();
+                selectedDoctorData = null;
+                els.departmentInput.value = '';
+                els.hospitalInput.value = '';
+                els.dayInput.value = '';
+                els.feeDisplay.textContent = '--';
+                els.feeDisplay.classList.remove('text-brand-700');
+                els.timeInput.innerHTML = '<option value="" disabled selected>Select a date first</option>';
+
+                // Switch to History tab automatically
+                els.historyBtn.click();
+                
+            } catch (error) {
+                hideLoader();
+                console.error("Error booking:", error);
+                showToast("Failed to book appointment.", true);
+            }
+        });
+
+        // --- 6. Tab Switching & Load History ---
+        const switchTab = (activeBtn, inactiveBtn, activeSec, inactiveSec) => {
+            activeBtn.classList.add('active');
+            inactiveBtn.classList.remove('active');
+            activeSec.classList.add('active');
+            inactiveSec.classList.remove('active');
+        };
+
+        if (els.addBtn && els.historyBtn) {
+            els.addBtn.addEventListener('click', () => {
+                switchTab(els.addBtn, els.historyBtn, els.addSection, els.historySection);
+                els.pageIcon.className = "fa-solid fa-stethoscope text-2xl md:text-3xl transition-all";
+                els.pageTitle.textContent = "Schedule a Visit";
+                els.pageSubtitle.textContent = "Fill in the details below to book an appointment with our specialists.";
+            });
+
+            els.historyBtn.addEventListener('click', () => {
+                switchTab(els.historyBtn, els.addBtn, els.historySection, els.addSection);
+                els.pageIcon.className = "fa-solid fa-list-check text-2xl md:text-3xl transition-all";
+                els.pageTitle.textContent = "My Appointments";
+                els.pageSubtitle.textContent = "Track and manage your past and upcoming visits.";
+                
+                // Always reload to get fresh data
+                loadAppointmentHistory();
+            });
+        }
+
+        const getStatusBadgeClass = (status) => {
+            const badgeMap = {
+                'Pending': 'bg-amber-100 text-amber-700 border-amber-200',
+                'Approved': 'bg-blue-100 text-blue-700 border-blue-200',
+                'Cancelled': 'bg-red-100 text-red-700 border-red-200',
+                'Completed': 'bg-emerald-100 text-emerald-700 border-emerald-200'
+            };
+            return badgeMap[status] || 'bg-slate-100 text-slate-700 border-slate-200';
+        };
+
+        const getTypeIcon = (type) => {
+            return type === 'Online Video' || type === 'Online' ? '<i class="fa-solid fa-video text-brand-500"></i>' : '<i class="fa-solid fa-hospital-user text-brand-500"></i>';
+        };
+
+        // --- Cancel Appointment Modal Logic ---
+        let appointmentToCancel = null;
+        const cancelModal = document.getElementById('cancel-modal');
+        const cancelModalCard = document.getElementById('cancel-modal-card');
+
+        window.openCancelModal = (event, apptId) => {
+            event.stopPropagation();
+            appointmentToCancel = apptId;
+            cancelModal.classList.remove('pointer-events-none', 'opacity-0');
+            cancelModal.classList.add('opacity-100');
+            cancelModalCard.classList.remove('scale-95');
+            cancelModalCard.classList.add('scale-100');
+        };
+
+        const closeCancelModal = () => {
+            appointmentToCancel = null;
+            cancelModal.classList.remove('opacity-100');
+            cancelModal.classList.add('pointer-events-none', 'opacity-0');
+            cancelModalCard.classList.remove('scale-100');
+            cancelModalCard.classList.add('scale-95');
+        };
+
+        document.getElementById('close-cancel-modal').addEventListener('click', closeCancelModal);
+        document.getElementById('btn-dismiss-cancel').addEventListener('click', closeCancelModal);
+
+        document.getElementById('btn-confirm-cancel').addEventListener('click', async () => {
+            if (!appointmentToCancel) return;
+            
+            showLoader();
+            closeCancelModal();
+            try {
+                const apptRef = doc(db, "appointments", appointmentToCancel);
+                await updateDoc(apptRef, { status: "Cancelled" });
+                hideLoader();
+                showToast("Appointment cancelled successfully.");
+                loadAppointmentHistory();
+            } catch (error) {
+                hideLoader();
+                console.error("Error cancelling appointment:", error);
+                showToast("Failed to cancel appointment.", true);
+            }
+        });
+
+        async function loadAppointmentHistory() {
+            showLoader();
+            try {
+                // Fetch appointments for this user
+                const q = query(collection(db, "appointments"), where("patientId", "==", currentUser.uid));
+                const snap = await getDocs(q);
+                
+                let historyData = [];
+                snap.forEach(d => historyData.push({ id: d.id, ...d.data() }));
+
+                // Sort by creation time descending (newest first)
+                historyData.sort((a, b) => {
+                    const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                    const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                    return timeB - timeA;
+                });
+
+                els.historyContainer.innerHTML = ''; 
+
+                if (historyData.length === 0) {
+                    els.historyContainer.innerHTML = `
+                        <div class="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                            <i class="fa-regular fa-calendar-xmark text-5xl text-slate-300 mb-4"></i>
+                            <p class="text-slate-500 font-medium text-[0.95rem]">No appointment history found.</p>
+                        </div>`;
+                } else {
+                    historyData.forEach(appt => {
+                        const appointmentItem = document.createElement('div');
+                        // Make card clickable to go to details
+                        appointmentItem.onclick = () => window.location.href = `appointment-details.html?id=${appt.id}`;
+                        appointmentItem.className = 'group flex flex-col md:flex-row md:items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-300 transition-all duration-300 cursor-pointer gap-4 relative overflow-hidden';
+                        
+                        const badgeClass = getStatusBadgeClass(appt.status);
+                        const typeIcon = getTypeIcon(appt.type);
+
+                        // Use doctor image if available, else generic icon
+                        const avatarHtml = appt.doctorImage 
+                            ? `<img src="${appt.doctorImage}" class="w-full h-full object-cover">` 
+                            : typeIcon;
+
+                        // Format Booked Time
+                        const createdAtDate = appt.createdAt ? appt.createdAt.toDate() : new Date();
+                        const bookedOn = `${createdAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}, ${createdAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+
+                        appointmentItem.innerHTML = `
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-brand-500 transition-colors"></div>
+                            
+                            <div class="flex items-center gap-4 pl-1">
+                                <div class="w-14 h-14 rounded-xl bg-brand-50 flex items-center justify-center text-xl md:text-2xl shrink-0 overflow-hidden border border-slate-100 shadow-sm">
+                                    ${avatarHtml}
+                                </div>
+                                <div class="flex flex-col">
+                                    <h3 class="font-bold text-slate-800 text-[1.05rem] leading-tight mb-1 group-hover:text-brand-700 transition-colors">${appt.doctorName}</h3>
+                                    <div class="flex items-center text-slate-500 text-[0.8rem] font-medium gap-1.5 mb-0.5">
+                                        <i class="fa-regular fa-calendar"></i> ${appt.date} (${appt.day})
+                                        <span class="text-slate-300 mx-0.5">|</span>
+                                        <i class="fa-regular fa-clock"></i> ${appt.time}
+                                    </div>
+                                    <div class="text-slate-400 text-[0.7rem] flex items-center gap-1">
+                                        <i class="fa-solid fa-clock-rotate-left"></i> Booked: ${bookedOn}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between md:justify-end w-full md:w-auto gap-3 border-t md:border-t-0 border-slate-100 pt-3 md:pt-0">
+                                <span class="px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wider rounded-md border ${badgeClass}">
+                                    ${appt.status}
+                                </span>
+                                
+                                <div class="flex items-center gap-2">
+                                    ${appt.status === 'Pending' || appt.status === 'Approved' ? `
+                                        <button onclick="window.openCancelModal(event, '${appt.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition-colors" title="Cancel Appointment">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    ` : ''}
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 group-hover:text-brand-600 transition-colors">
+                                        <i class="fa-solid fa-chevron-right"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        els.historyContainer.appendChild(appointmentItem);
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching history:", error);
+                els.historyContainer.innerHTML = `<p class="text-red-500 text-center p-4">Error loading history.</p>`;
+            }
+            hideLoader();
+        }
+    </script>
+</body>
+</html>

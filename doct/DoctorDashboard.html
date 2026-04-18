@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',
+                            accent: '#6366f1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .text-gray-400 { color: #cbd5e1 !important; }
+        .text-gray-500 { color: #94a3b8 !important; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* General Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #14b8a6; }
+    </style>
+    <script src="header.js" defer></script>
+    <script src="load.js" defer></script>
+</head>
+
+<body class="antialiased selection:bg-brand-secondary selection:text-white pt-[70px]">
+
+    <div id="header-placeholder"></div>
+
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+
+    <div class="flex h-[calc(100vh-70px)] w-full overflow-hidden relative">
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8 relative z-10 w-full">
+            
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-primary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+            
+            <div class="glass-card rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden bg-gradient-to-r from-[#0f172a] to-[#082f49] border-l-4 border-brand-secondary z-10">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-brand-secondary/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">Welcome back, <span id="doc-name-display">Dr...</span>! 👋</h1>
+                        <p class="text-gray-400 text-sm md:text-base">You have <span class="text-brand-secondary font-bold" id="today-count-display">0</span> appointments scheduled for today. Have a great day ahead!</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3 shrink-0 mt-2 md:mt-0">
+                        <button onclick="window.location.href='CancelAppointment.html'" class="flex items-center gap-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg">
+                            <i class="fa-solid fa-ban"></i> Cancelled Appointments
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 relative z-10">
+                
+                <div onclick="window.location.href='todays-schedule.html'" class="cursor-pointer bg-[#0f172a]/80 backdrop-blur-md rounded-3xl p-6 ring-2 ring-offset-4 ring-offset-[#020617] ring-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.15)] hover:ring-blue-400 transition-all transform hover:-translate-y-1 relative overflow-hidden group">
+                    <i class="fa-solid fa-calendar-day absolute -right-4 -bottom-4 text-7xl text-blue-500/5 group-hover:text-blue-500/10 transition-colors pointer-events-none transform -rotate-12"></i>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <h3 class="text-gray-200 text-lg font-bold">Today's Patients</h3>
+                        <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                            <i class="fa-solid fa-user-clock"></i>
+                        </div>
+                    </div>
+                    <div class="mb-2 relative z-10">
+                        <span id="stat-today" class="text-4xl font-black text-white tracking-tight">0</span>
+                    </div>
+                    <p class="text-xs font-medium text-blue-400 bg-blue-400/10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full relative z-10">
+                        View Schedule <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </p>
+                </div>
+
+                <div onclick="window.location.href='UpcomingAppointment.html'" class="cursor-pointer bg-[#0f172a]/80 backdrop-blur-md rounded-3xl p-6 ring-2 ring-offset-4 ring-offset-[#020617] ring-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.15)] hover:ring-cyan-400 transition-all transform hover:-translate-y-1 relative overflow-hidden group">
+                    <i class="fa-solid fa-calendar-week absolute -right-4 -bottom-4 text-7xl text-cyan-500/5 group-hover:text-cyan-500/10 transition-colors pointer-events-none transform -rotate-12"></i>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <h3 class="text-gray-200 text-lg font-bold">Upcoming Patients</h3>
+                        <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div class="mb-2 relative z-10">
+                        <span id="stat-upcoming" class="text-4xl font-black text-white tracking-tight">0</span>
+                    </div>
+                    <p class="text-xs font-medium text-cyan-400 bg-cyan-400/10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full relative z-10">
+                        Approved List <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </p>
+                </div>
+
+                <div onclick="window.location.href='new-registrations.html'" class="cursor-pointer bg-[#0f172a]/80 backdrop-blur-md rounded-3xl p-6 ring-2 ring-offset-4 ring-offset-[#020617] ring-yellow-500/50 shadow-[0_0_20px_rgba(234,179,8,0.15)] hover:ring-yellow-400 transition-all transform hover:-translate-y-1 relative overflow-hidden group">
+                    <i class="fa-solid fa-user-plus absolute -right-4 -bottom-4 text-7xl text-yellow-500/5 group-hover:text-yellow-500/10 transition-colors pointer-events-none transform -rotate-12"></i>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <h3 class="text-gray-200 text-lg font-bold">New Registrations</h3>
+                        <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                    </div>
+                    <div class="mb-2 relative z-10">
+                        <span id="stat-pending" class="text-4xl font-black text-white tracking-tight">0</span>
+                    </div>
+                    <p class="text-xs font-medium text-yellow-400 bg-yellow-400/10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full relative z-10">
+                        Pending Approval <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </p>
+                </div>
+
+                <div onclick="window.location.href='CompletedConsultations.html'" class="cursor-pointer bg-[#0f172a]/80 backdrop-blur-md rounded-3xl p-6 ring-2 ring-offset-4 ring-offset-[#020617] ring-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:ring-emerald-400 transition-all transform hover:-translate-y-1 relative overflow-hidden group">
+                    <i class="fa-solid fa-clipboard-check absolute -right-4 -bottom-4 text-7xl text-emerald-500/5 group-hover:text-emerald-500/10 transition-colors pointer-events-none transform -rotate-12"></i>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <h3 class="text-gray-200 text-lg font-bold">Completed</h3>
+                        <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                            <i class="fa-solid fa-check-double"></i>
+                        </div>
+                    </div>
+                    <div class="mb-2 relative z-10">
+                        <span id="stat-completed" class="text-3xl font-black text-white tracking-tight">0</span>
+                    </div>
+                    <p class="text-xs font-medium text-emerald-400 bg-emerald-400/10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full relative z-10">
+                        View History <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
+                
+                <div class="glass-card rounded-3xl p-6 relative z-10 border border-white/5 flex flex-col h-[400px]">
+                    <div class="flex justify-between items-center mb-4 border-b border-white/5 pb-4 shrink-0">
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-regular fa-clock text-cyan-400"></i> Upcoming
+                        </h2>
+                        <button onclick="window.location.href='UpcomingAppointment.html'" class="text-xs font-medium text-cyan-400 hover:text-white transition-colors bg-cyan-400/10 hover:bg-cyan-400/20 px-3 py-1.5 rounded-full">View All</button>
+                    </div>
+                    
+                    <div class="overflow-y-auto flex-1 custom-scrollbar pr-2">
+                        <table class="w-full text-left border-collapse">
+                            <tbody class="text-sm" id="dashboard-upcoming-list">
+                                <tr><td class="text-gray-500 text-center py-4">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-6 relative z-10 border border-white/5 flex flex-col h-[400px]">
+                    <div class="flex justify-between items-center mb-4 border-b border-white/5 pb-4 shrink-0">
+                        <h2 class="text-lg font-bold text-gray-300 flex items-center gap-2">
+                            <i class="fa-solid fa-check-double text-emerald-500"></i> Completed
+                        </h2>
+                        <button onclick="window.location.href='CompletedConsultations.html'" class="text-xs font-medium text-emerald-500 hover:text-white transition-colors bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-full">View All</button>
+                    </div>
+                    
+                    <div class="overflow-y-auto flex-1 custom-scrollbar pr-2">
+                        <table class="w-full text-left border-collapse opacity-90">
+                            <tbody class="text-sm" id="dashboard-completed-list">
+                                <tr><td class="text-gray-500 text-center py-4">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // UI Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        // Parse Time into Timestamp for accurate sorting
+        function getApptTimestamp(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return 0; 
+            try {
+                const [timePart, ampm] = timeStr.split(' ');
+                let [hours, mins] = timePart.split(':').map(Number);
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+                
+                const [y, m, d] = dateStr.split('-').map(Number);
+                return new Date(y, m - 1, d, hours, mins).getTime();
+            } catch(e) {
+                return 0;
+            }
+        }
+
+        const getTodayDateString = () => {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        };
+
+        // --- Init & Load Data ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadDashboardData();
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        async function loadDashboardData() {
+            showLoader();
+            try {
+                // 1. Fetch Doctor Name
+                const docRef = doc(db, "users", currentUser.uid);
+                const docSnap = await getDoc(docRef);
+                if(docSnap.exists()) {
+                    document.getElementById('doc-name-display').textContent = docSnap.data().name || "Doctor";
+                }
+
+                // 2. Fetch all appointments for this doctor
+                const q = query(collection(db, "appointments"), where("doctorId", "==", currentUser.uid));
+                const querySnapshot = await getDocs(q);
+                
+                let allAppts = [];
+                querySnapshot.forEach((doc) => {
+                    allAppts.push({ id: doc.id, ...doc.data() });
+                });
+
+                // 3. Calculate Metrics
+                const todayStr = getTodayDateString();
+                let countToday = 0;
+                let countUpcoming = 0; 
+                let countPending = 0;
+                let countCompleted = 0;
+
+                const todayTimestamp = new Date(todayStr).getTime();
+
+                allAppts.forEach(appt => {
+                    const apptTime = getApptTimestamp(appt.date, appt.time);
+                    const apptDateObj = new Date(appt.date).getTime();
+
+                    if (appt.date === todayStr && (appt.status === "Approved" || appt.status === "Pending")) {
+                        countToday++;
+                    }
+
+                    if (appt.status === "Approved" && apptDateObj >= todayTimestamp) {
+                        countUpcoming++;
+                    }
+
+                    if (appt.status === "Pending") countPending++;
+                    if (appt.status === "Completed") countCompleted++;
+                });
+
+                // Update UI Metrics
+                document.getElementById('today-count-display').textContent = countToday;
+                document.getElementById('stat-today').textContent = countToday;
+                document.getElementById('stat-upcoming').textContent = countUpcoming;
+                document.getElementById('stat-pending').textContent = countPending;
+                document.getElementById('stat-completed').textContent = countCompleted;
+
+                // 4. Filter for Table 1: Upcoming (Approved, sorted Earliest First)
+                let upcomingList = allAppts.filter(a => a.status === "Approved" && getApptTimestamp(a.date, a.time) >= new Date().getTime());
+                upcomingList.sort((a, b) => getApptTimestamp(a.date, a.time) - getApptTimestamp(b.date, b.time));
+                
+                // 5. Filter for Table 2: Completed (Sorted Newest First)
+                let completedList = allAppts.filter(a => a.status === "Completed");
+                completedList.sort((a, b) => getApptTimestamp(b.date, b.time) - getApptTimestamp(a.date, a.time));
+
+                // Render Tables (Limit to 5 for dashboard)
+                await renderUpcomingTable(upcomingList.slice(0, 5));
+                await renderCompletedTable(completedList.slice(0, 5));
+
+            } catch (error) {
+                console.error("Error loading dashboard data:", error);
+            }
+            hideLoader();
+        }
+
+        async function getPatientDetails(patientId) {
+            let patientName = "Unknown";
+            let patientAvatar = `https://ui-avatars.com/api/?name=U&background=0ea5e9&color=fff`;
+            if (patientId) {
+                const patientSnap = await getDoc(doc(db, "users", patientId));
+                if (patientSnap.exists()) {
+                    patientName = patientSnap.data().name || "Unknown";
+                    patientAvatar = patientSnap.data().profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(patientName)}&background=0ea5e9&color=fff`;
+                }
+            }
+            return { patientName, patientAvatar };
+        }
+
+        async function renderUpcomingTable(list) {
+            const tbody = document.getElementById('dashboard-upcoming-list');
+            tbody.innerHTML = '';
+
+            if(list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-gray-500 text-center py-8">No upcoming appointments.</td></tr>';
+                return;
+            }
+
+            for(const appt of list) {
+                const { patientName, patientAvatar } = await getPatientDetails(appt.patientId);
+                const shortId = `PT-${appt.id.substring(0, 4).toUpperCase()}`;
+                const isToday = appt.date === getTodayDateString();
+                const dateLabel = isToday ? "Today" : appt.date;
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer";
+                tr.onclick = () => window.location.href = `appointment-details.html?id=${appt.id}`;
+                
+                tr.innerHTML = `
+                    <td class="py-3 px-2">
+                        <div class="flex items-center gap-3">
+                            <img src="${patientAvatar}" alt="Avatar" class="w-10 h-10 rounded-full shadow-md object-cover">
+                            <div>
+                                <p class="font-bold text-white text-sm truncate max-w-[120px]">${patientName}</p>
+                                <p class="text-[10px] text-gray-500 font-medium">ID: ${shortId}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-2">
+                        <p class="text-gray-300 font-bold text-sm">${appt.time}</p>
+                        <p class="text-[10px] ${isToday ? 'text-brand-secondary' : 'text-gray-500'} font-medium">${dateLabel}</p>
+                    </td>
+                    <td class="py-3 px-2">
+                        <span class="px-2 py-1 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Confirmed</span>
+                    </td>
+                    <td class="py-3 px-2 text-right">
+                        <button onclick="event.stopPropagation(); window.location.href='consultation.html?id=${appt.id}'" class="bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all border border-brand-primary/30">
+                            Consult
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        async function renderCompletedTable(list) {
+            const tbody = document.getElementById('dashboard-completed-list');
+            tbody.innerHTML = '';
+
+            if(list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-gray-500 text-center py-8">No completed consultations yet.</td></tr>';
+                return;
+            }
+
+            for(const appt of list) {
+                const { patientName, patientAvatar } = await getPatientDetails(appt.patientId);
+                const shortId = `PT-${appt.id.substring(0, 4).toUpperCase()}`;
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer";
+                tr.onclick = () => window.location.href = `consultation.html?id=${appt.id}`;
+                
+                tr.innerHTML = `
+                    <td class="py-3 px-2">
+                        <div class="flex items-center gap-3">
+                            <img src="${patientAvatar}" alt="Avatar" class="w-10 h-10 rounded-full shadow-md object-cover grayscale opacity-80">
+                            <div>
+                                <p class="font-bold text-gray-300 text-sm truncate max-w-[120px]">${patientName}</p>
+                                <p class="text-[10px] text-gray-500 font-medium">ID: ${shortId}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-2">
+                        <p class="text-gray-400 font-medium text-xs">${appt.date}</p>
+                    </td>
+                    <td class="py-3 px-2">
+                        <p class="text-gray-500 text-xs truncate max-w-[100px]" title="${appt.symptoms || 'Routine Checkup'}">${appt.symptoms || 'Routine Checkup'}</p>
+                    </td>
+                    <td class="py-3 px-2 text-right">
+                        <button onclick="event.stopPropagation(); window.location.href='consultation.html?id=${appt.id}'" class="text-emerald-500 hover:text-emerald-400 transition-colors underline text-[11px] font-medium">
+                            Prescription
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Today's Schedule</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',
+                            accent: '#6366f1',
+                            emerald: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* General Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
+        /* Modal-like Tooltip implementation for truncated text */
+        .complaint-box[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: normal;
+            width: max-content;
+            max-width: 320px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.8), 0 8px 10px -6px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            z-index: 50;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        /* Triangle pointer for tooltip */
+        .complaint-box[title]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: #0f172a transparent transparent transparent;
+            margin-bottom: 0px;
+            z-index: 51;
+        }
+
+        /* Smooth fade transition for filtering */
+        .patient-row { transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete; }
+        .hidden-row { opacity: 0; transform: scale(0.98); position: absolute; pointer-events: none; z-index: -1; display: none; }
+
+        /* Loader & Toast Styles */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; font-size: 3rem; color: #14b8a6; }
+        #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; padding: 0.875rem 1.5rem; border-radius: 9999px; font-size: 0.875rem; transition: transform 0.4s ease, opacity 0.4s ease; opacity: 0; z-index: 9999; white-space: nowrap; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        #toast.success { border-bottom: 2px solid #14b8a6; }
+        #toast.error { border-bottom: 2px solid #ef4444; }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-brand-secondary selection:text-white pt-[70px]">
+
+    <div id="header-placeholder" data-header="header.html"></div>
+    <div id="global-loader" class="loader-overlay"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+    <div id="toast"></div>
+
+    <!-- Main Wrapper -->
+    <div class="flex h-[calc(100vh-70px)] w-full overflow-hidden relative">
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto px-4 py-2 lg:px-8 lg:py-4 relative z-10 w-full">
+            
+            <!-- Background Glow Effects for Appointment Vibe -->
+            <div class="absolute top-0 right-0 w-96 h-96 bg-brand-primary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+            <!-- 1. Header and Overview -->
+            <div class="glass-card rounded-3xl p-4 md:p-5 mb-4 relative z-10 shadow-xl border-l-4 border-brand-secondary">
+                
+                <!-- title and filter -->
+                <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+                            <i class="fa-regular fa-calendar-day text-brand-primary"></i> 
+                            Today's Schedule 
+                            <span class="text-gray-500 font-normal text-xl hidden md:inline">|</span> 
+                            <span class="text-brand-primary text-xl font-medium" id="today-date">Loading...</span>
+                        </h1>
+                        <p class="text-sm text-gray-400 mt-1 max-w-2xl truncate">
+                            Manage and track your patient consultations for today.
+                        </p>
+                    </div>
+                    
+                    <!-- Counts and Searching -->
+                    <div class="flex flex-col items-start md:items-end gap-3 w-full md:w-auto shrink-0">
+                        <!-- Counts (Non-clickable) -->
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 rounded-md text-sm font-medium text-gray-300 bg-white/5 border border-white/10 cursor-default" id="count-all">
+                                Today All (0)
+                            </span>
+                            <span class="px-3 py-1 rounded-md text-sm font-medium text-brand-secondary bg-brand-secondary/10 border border-brand-secondary/20 cursor-default" id="count-pending">
+                                Pending (0)
+                            </span>
+                        </div>
+                        <!-- Search Bar -->
+                        <div class="relative w-full md:w-[250px]">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                            <input type="text" id="search-input" placeholder="Search by name or ID..." class="w-full bg-[#020617] border border-white/10 text-white text-sm rounded-lg pl-8 pr-4 py-2 focus:border-brand-secondary outline-none placeholder-gray-500 transition-colors">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Mean List (Sorted chronologically for TODAY) -->
+            <div class="space-y-4 relative z-10 pb-12 mt-4" id="patient-list">
+                <!-- Javascript will inject today's appointment cards here -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Cancel Appointment Confirmation Modal -->
+    <div id="cancel-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#020617]/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl shadow-red-500/10 transform scale-95 transition-transform duration-300 flex flex-col items-center text-center" id="cancel-modal-card">
+            <div class="w-14 h-14 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center text-2xl mb-4">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Cancel Appointment?</h3>
+            <p class="text-sm text-gray-400 mb-6">Are you sure you want to cancel this appointment? This action cannot be undone.</p>
+            
+            <div class="flex gap-3 w-full">
+                <button onclick="window.closeCancelModal()" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                    No, Keep it
+                </button>
+                <button onclick="window.confirmCancelAction()" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all">
+                    Yes, Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="load.js"></script>
+
+    <!-- FIREBASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3j0hKqGlcIZBKUdWk2QgSItKQBgeyXyA",
+            authDomain: "cdhp-87979.firebaseapp.com",
+            projectId: "cdhp-87979",
+            storageBucket: "cdhp-87979.firebasestorage.app",
+            messagingSenderId: "1059870042612",
+            appId: "1:1059870042612:web:2eac3dcb927f3e213bb1a1",
+            measurementId: "G-BZS8FPB1K2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let todayAppointments = [];
+        let appointmentToCancel = null; // Track which appointment to cancel
+
+        // Get Today's Date String in YYYY-MM-DD format (Match with DB date format)
+        const getTodayDateString = () => {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        };
+
+        // Display formatted today's date in header
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        const shortOptions = { day: 'numeric', month: 'short' };
+        const todayObj = new Date();
+        const todayStrFull = todayObj.toLocaleDateString('en-GB', options);
+        const todayStrShort = todayObj.toLocaleDateString('en-GB', shortOptions);
+        document.getElementById('today-date').textContent = todayStrFull;
+
+        // UI Helpers
+        const showLoader = () => document.getElementById('global-loader').style.display = 'flex';
+        const hideLoader = () => document.getElementById('global-loader').style.display = 'none';
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `show ${type}`;
+            
+            if (type === 'error') {
+                t.style.borderBottomColor = '#ef4444';
+            } else {
+                t.style.borderBottomColor = '#14b8a6';
+            }
+            
+            setTimeout(() => { t.className = ''; }, 3000);
+        }
+
+        // Parse Time into Timestamp for accurate sorting
+        function getApptTimestamp(timeStr) {
+            if (!timeStr) return Infinity; 
+            try {
+                const [timePart, ampm] = timeStr.split(' ');
+                let [hours, mins] = timePart.split(':').map(Number);
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+                
+                // Use today's date as base, add hours and mins
+                const d = new Date();
+                d.setHours(hours, mins, 0, 0);
+                return d.getTime();
+            } catch(e) {
+                return Infinity;
+            }
+        }
+
+        // --- Init & Load Data ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadTodayAppointments();
+            } else {
+                window.location.href = '../src/index.html'; 
+            }
+        });
+
+        // Make load function accessible globally for refreshing list
+        window.loadTodayAppointments = async function() {
+            showLoader();
+            try {
+                const container = document.getElementById('patient-list');
+                container.innerHTML = '';
+                todayAppointments = [];
+
+                const todayStrDB = getTodayDateString();
+
+                // Fetch "Approved" appointments for this doctor exactly for TODAY
+                const q = query(
+                    collection(db, "appointments"), 
+                    where("doctorId", "==", currentUser.uid),
+                    where("status", "==", "Approved"),
+                    where("date", "==", todayStrDB) 
+                );
+                
+                const querySnapshot = await getDocs(q);
+                let appointments = [];
+
+                querySnapshot.forEach((doc) => {
+                    appointments.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort by appointment time (Earliest first)
+                appointments.sort((a, b) => {
+                    const timeA = getApptTimestamp(a.time);
+                    const timeB = getApptTimestamp(b.time);
+                    return timeA - timeB; 
+                });
+
+                // Set Counts
+                document.getElementById('count-all').textContent = `Today All (${appointments.length})`;
+                document.getElementById('count-pending').textContent = `Pending (${appointments.length})`;
+
+                if (appointments.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-20 opacity-60">
+                            <i class="fa-regular fa-sun text-6xl mb-4 text-gray-500"></i>
+                            <h3 class="text-xl font-bold text-gray-400">Your day is clear!</h3>
+                            <p class="text-sm text-gray-500 mt-2">You don't have any appointments scheduled for today.</p>
+                        </div>
+                    `;
+                    hideLoader();
+                    return;
+                }
+
+                // Identify if an appointment is currently active (very basic logic based on current time)
+                const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+
+                // Fetch patient details and render cards
+                for (let i = 0; i < appointments.length; i++) {
+                    const appt = appointments[i];
+                    
+                    // Default patient data
+                    let patientName = "Unknown Patient";
+                    let patientAvatar = `https://ui-avatars.com/api/?name=Unknown&background=0ea5e9&color=fff`;
+
+                    if (appt.patientId) {
+                        const patientSnap = await getDoc(doc(db, "users", appt.patientId));
+                        if (patientSnap.exists()) {
+                            const pData = patientSnap.data();
+                            patientName = pData.name || "Unknown Patient";
+                            if (pData.profileImageUrl) {
+                                patientAvatar = pData.profileImageUrl;
+                            } else {
+                                patientAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(patientName)}&background=0ea5e9&color=fff`;
+                            }
+                        }
+                    }
+
+                    // Save processed data for search
+                    const shortId = `PT-${appt.id.substring(0, 4).toUpperCase()}`;
+                    appt._patientName = patientName;
+                    appt._shortId = shortId;
+                    todayAppointments.push(appt);
+
+                    const createdAtDate = appt.createdAt ? appt.createdAt.toDate() : new Date();
+                    const bookedOn = `${createdAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}, ${createdAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+
+                    const isOnline = (appt.type === "Online" || appt.type === "Online Video");
+                    const typeIcon = isOnline ? "fa-video" : "fa-hospital-user";
+                    const typeLabel = isOnline ? "Online" : "In-Person";
+                    const typeClasses = isOnline 
+                        ? "bg-blue-900/40 text-blue-300 border-blue-500/20" 
+                        : "bg-indigo-900/40 text-indigo-300 border-indigo-500/20";
+                    
+                    const actionBtnIcon = isOnline ? "fa-video" : "fa-stethoscope";
+                    const actionBtnLabel = isOnline ? "Join Call" : "Consult";
+                    
+                    // Basic Current Appointment Logic: Time is within 30 mins of now
+                    const apptTimestamp = getApptTimestamp(appt.time);
+                    const apptDateObj = new Date(apptTimestamp);
+                    const apptMins = apptDateObj.getHours() * 60 + apptDateObj.getMinutes();
+                    const isCurrent = (nowMins >= apptMins - 5) && (nowMins <= apptMins + 30);
+                    
+                    let cardClasses = "";
+                    let highlightDiv = "";
+                    let timeLabelColor = "text-white";
+                    let actionBtnClasses = "bg-brand-primary/20 hover:bg-brand-primary hover:text-white text-brand-primary border-brand-primary/30 shadow-lg";
+
+                    if (isCurrent && i === 0) { // Example: Topmost and active
+                        cardClasses = "border-brand-secondary ring-1 ring-brand-secondary/50 shadow-[0_0_20px_rgba(20,184,166,0.15)] mt-6 mb-6";
+                        highlightDiv = `<div class="absolute right-0 top-0 w-48 h-full bg-brand-secondary/10 skew-x-12 transform -translate-x-8 pointer-events-none"></div>`;
+                        timeLabelColor = "text-brand-secondary";
+                        actionBtnClasses = "bg-brand-secondary hover:bg-teal-400 text-[#0f172a] font-bold border-brand-secondary/30 shadow-lg shadow-brand-secondary/20";
+                        actionBtnLabel.replace("Consult", "Resume Consult");
+                    } else {
+                        const borderClass = i % 2 === 0 ? "border-brand-primary" : "border-cyan-500";
+                        cardClasses = `${borderClass} hover:shadow-[0_0_20px_rgba(14,165,233,0.1)]`;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = `patient-row flex flex-col lg:flex-row items-start lg:items-center gap-4 p-4 glass-card rounded-2xl border-l-[5px] hover:bg-white/[0.02] transition-all group relative ${cardClasses}`;
+                    card.dataset.name = patientName.toLowerCase();
+                    card.dataset.id = shortId.toLowerCase();
+                    
+                    card.innerHTML = `
+                        ${highlightDiv}
+                        <!-- Schedule Info -->
+                        <div class="flex flex-col gap-1 shrink-0 lg:w-[270px] relative z-10">
+                            <div class="flex items-center gap-2 ${timeLabelColor} font-bold text-sm tracking-wide whitespace-nowrap">
+                                <i class="fa-regular fa-calendar ${isCurrent && i===0 ? 'text-brand-secondary' : 'text-gray-400'}"></i>
+                                <span>${todayStrShort} (Today)</span>
+                                <span class="${isCurrent && i===0 ? 'text-brand-secondary/50' : 'text-gray-600'} font-normal">|</span>
+                                <i class="fa-regular fa-clock ${isCurrent && i===0 ? 'text-brand-secondary' : 'text-gray-400'}"></i>
+                                <span class="${isCurrent && i===0 ? 'text-lg' : ''}">${appt.time}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-xs ${isCurrent && i===0 ? 'text-brand-secondary/70' : 'text-gray-400'} font-medium pl-0.5 whitespace-nowrap">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                <span>Booked: ${bookedOn}</span>
+                            </div>
+                        </div>
+
+                        <!-- Patient Info -->
+                        <div class="flex items-center gap-3 shrink-0 lg:w-[210px] relative z-10">
+                            <img src="${patientAvatar}" alt="Avatar" class="w-12 h-12 rounded-full border-2 ${isCurrent && i===0 ? 'border-brand-secondary shadow-lg' : 'border-white/20 shadow-md'} object-cover">
+                            <div>
+                                <h3 class="text-base font-bold text-white group-hover:${isCurrent && i===0 ? 'text-brand-secondary' : 'text-brand-primary'} transition-colors leading-tight">${patientName}</h3>
+                                <p class="text-[11px] font-bold text-gray-400 mt-0.5">Appointment ID: <span class="${isCurrent && i===0 ? 'text-brand-secondary' : 'text-brand-primary'}">${shortId}</span></p>
+                            </div>
+                        </div>
+                        
+                        <!-- Reason for Visit -->
+                        <div class="flex-1 w-full bg-[#020617]/60 rounded-xl p-3 border ${isCurrent && i===0 ? 'border-brand-secondary/20' : 'border-white/5'} relative cursor-help complaint-box transition-colors hover:border-white/10 z-10" title="${appt.symptoms || 'No symptoms provided.'}">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-[9px] ${isCurrent && i===0 ? 'text-brand-secondary/80' : 'text-brand-primary/80'} uppercase font-bold tracking-wider">Reason for Visit / Symptoms</p>
+                                    <i class="fa-solid fa-circle-info ${isCurrent && i===0 ? 'text-brand-secondary/60' : 'text-gray-600'} text-[10px]"></i>
+                                </div>
+                                <i class="fa-solid fa-quote-right text-gray-700 text-xs"></i>
+                            </div>
+                            <p class="text-sm ${isCurrent && i===0 ? 'text-gray-200 font-medium' : 'text-gray-300'} line-clamp-1 leading-relaxed">
+                                ${appt.symptoms || 'No symptoms provided.'}
+                            </p>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex flex-col gap-2 shrink-0 lg:w-[220px] w-full relative z-10">
+                            <div class="flex gap-2 h-8">
+                                ${isCurrent && i === 0 ? `
+                                <div class="flex-1 bg-red-500/10 text-red-400 px-2 rounded-lg text-[11px] font-bold border border-red-500/20 flex items-center justify-center whitespace-nowrap">
+                                    <span class="relative flex h-2 w-2 mr-2">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                    </span> Consulting Now
+                                </div>
+                                ` : `
+                                <div class="flex-1 px-2 rounded-lg text-[11px] font-medium border flex items-center justify-center whitespace-nowrap ${typeClasses}">
+                                    <i class="fa-solid ${typeIcon} mr-1.5"></i> ${typeLabel}
+                                </div>
+                                `}
+                                <button onclick="window.viewPatientProfile('${appt.patientId}')" class="w-8 h-8 shrink-0 bg-[#1e293b]/50 hover:bg-white/10 ${isCurrent && i===0 ? 'text-brand-secondary border-brand-secondary/30' : 'text-gray-300 border-white/5'} rounded-lg flex items-center justify-center transition-colors border text-sm" title="View Full Profile">
+                                    <i class="fa-regular fa-folder-open"></i>
+                                </button>
+                            </div>
+                            <div class="flex gap-2 h-8">
+                                <button onclick="window.startConsultation('${appt.id}')" class="flex-1 px-2 rounded-lg text-xs transition-all border flex items-center justify-center gap-1.5 ${actionBtnClasses}">
+                                    <i class="fa-solid ${actionBtnIcon}"></i> ${actionBtnLabel}
+                                </button>
+                                ${!isCurrent || i !== 0 ? `
+                                <button onclick="window.openCancelModal('${appt.id}')" class="flex-1 bg-[#7f1d1d]/30 hover:bg-red-500 hover:text-white text-red-400 px-2 rounded-lg text-xs font-bold transition-all border border-red-500/20 flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/5">
+                                    <i class="fa-solid fa-xmark"></i> Cancel
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+
+            } catch (error) {
+                console.error("Error loading today's appointments:", error);
+                showToast("Error loading data", "error");
+            }
+            hideLoader();
+        }
+
+        // --- Search Functionality ---
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('.patient-row');
+            
+            rows.forEach(row => {
+                const name = row.dataset.name || "";
+                const id = row.dataset.id || "";
+                if (name.includes(query) || id.includes(query)) {
+                    row.classList.remove('hidden-row');
+                } else {
+                    row.classList.add('hidden-row');
+                }
+            });
+        });
+
+        // --- Action Functions Attached to Window ---
+
+        // 1. View Profile
+        window.viewPatientProfile = (patientId) => {
+            window.location.href = `patient-profile.html?id=${patientId}`;
+        };
+
+        // 2. Start Consultation
+        window.startConsultation = (apptId) => {
+            window.location.href = `consultation.html?id=${apptId}`;
+        };
+
+        // 3. Cancel Appointment Modal Logic
+        window.openCancelModal = (apptId) => {
+            appointmentToCancel = apptId;
+            const modal = document.getElementById('cancel-modal');
+            const card = document.getElementById('cancel-modal-card');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        };
+
+        window.closeCancelModal = () => {
+            const modal = document.getElementById('cancel-modal');
+            const card = document.getElementById('cancel-modal-card');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+            setTimeout(() => { appointmentToCancel = null; }, 300);
+        };
+
+        window.confirmCancelAction = async () => {
+            if (!appointmentToCancel) return;
+            
+            window.closeCancelModal();
+            showLoader();
+            try {
+                await updateDoc(doc(db, "appointments", appointmentToCancel), {
+                    status: "Cancelled"
+                });
+                hideLoader();
+                showToast("Appointment cancelled successfully!");
+                // Reload list to remove it from UI, staying on the same page
+                window.loadTodayAppointments();
+            } catch (error) {
+                hideLoader();
+                console.error("Error cancelling:", error);
+                showToast("Failed to cancel.", "error");
+            }
+        };
+
+    </script>
+</body>
+</html>

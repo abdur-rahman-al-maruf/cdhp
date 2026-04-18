@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centralized Digital Healthcare Platform</title>
+    <link rel="icon" href="../img/CDHP_Logo.ico">
+    
+    <!-- Tailwind CSS (CDN) for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (CDN) for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AOS Animation CSS (for scroll animations) -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#e2e8f0',
+                            primary: '#0ea5e9',
+                            secondary: '#14b8a6',
+                            accent: '#6366f1',
+                            navbg: '#164e63',
+                            navaccent: '#06b6d4'
+                        }
+                    },
+                    animation: {
+                        blob: "blob 7s infinite",
+                        float: "float 3s ease-in-out infinite",
+                    },
+                    keyframes: {
+                        blob: {
+                            "0%": { transform: "translate(0px, 0px) scale(1)" },
+                            "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+                            "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+                            "100%": { transform: "translate(0px, 0px) scale(1)" }
+                        },
+                        float: {
+                            "0%": { transform: "translateY(0)" },
+                            "50%": { transform: "translateY(-20px)" },
+                            "100%": { transform: "translateY(0)" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #2dd4bf, #3b82f6);
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bg-gradient-custom {
+            background: linear-gradient(135deg, rgba(45,212,191,0.1) 0%, rgba(59,130,246,0.1) 100%);
+        }
+
+        /* Project Text Logo Style */
+        .project-logo-text {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #ffffff, #e2e8f0);
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-brand-secondary selection:text-white pt-[70px]">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 w-full z-50 bg-[#164e63] shadow-md border-b border-[#21627c]/50 h-[70px] flex items-center transition-all duration-300 font-['Roboto']">
+        <div class="w-full max-w-[1400px] mx-auto px-4 lg:px-6 flex justify-between items-center h-full">
+            
+            <!-- Left: Logo & Title -->
+            <div class="flex items-center gap-2 lg:gap-4 shrink w-[60%] sm:w-auto min-w-0">
+                <a href="#home" class="flex items-center gap-2 lg:gap-3 font-bold text-[0.95rem] sm:text-[1.1rem] leading-[1.2] text-white hover:opacity-90 transition-opacity min-w-0 w-full">
+                    <div class="w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] rounded-lg shrink-0 overflow-hidden transform hover:scale-105 transition-transform duration-300 shadow-md">
+                        <img src="../img/CDHP_Logo.png" alt="CDHP Logo" class="w-full h-full object-cover">
+                    </div>
+                    <span class="whitespace-nowrap truncate tracking-wide w-full">Centralized Digital Healthcare Platform</span>
+                </a>
+            </div>
+
+            <!-- Center: Nav Links -->
+            <div class="hidden lg:flex flex-1 justify-center px-4 z-[100]">
+                <ul class="flex items-center gap-8 xl:gap-12 m-0 p-0 list-none">
+                    <li>
+                        <a href="#home" class="group relative flex items-center gap-2 text-white/80 hover:text-white text-[1rem] font-medium px-3 py-2 rounded-lg hover:bg-white/10 hover:-translate-y-[2px] transition-all duration-300">
+                            <i class="fa-solid fa-house w-4 text-center"></i> Home
+                            <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-[#06b6d4] rounded-t-sm transition-all duration-300 group-hover:w-[70%] opacity-0 group-hover:opacity-100"></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#problems" class="group relative flex items-center gap-2 text-white/80 hover:text-white text-[1rem] font-medium px-3 py-2 rounded-lg hover:bg-white/10 hover:-translate-y-[2px] transition-all duration-300">
+                            <i class="fa-solid fa-triangle-exclamation w-4 text-center"></i> Problems
+                            <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-[#06b6d4] rounded-t-sm transition-all duration-300 group-hover:w-[70%] opacity-0 group-hover:opacity-100"></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#features" class="group relative flex items-center gap-2 text-white/80 hover:text-white text-[1rem] font-medium px-3 py-2 rounded-lg hover:bg-white/10 hover:-translate-y-[2px] transition-all duration-300">
+                            <i class="fa-solid fa-list-check w-4 text-center"></i> Features
+                            <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-[#06b6d4] rounded-t-sm transition-all duration-300 group-hover:w-[70%] opacity-0 group-hover:opacity-100"></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#team" class="group relative flex items-center gap-2 text-white/80 hover:text-white text-[1rem] font-medium px-3 py-2 rounded-lg hover:bg-white/10 hover:-translate-y-[2px] transition-all duration-300">
+                            <i class="fa-solid fa-users w-4 text-center"></i> Our Team
+                            <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-[#06b6d4] rounded-t-sm transition-all duration-300 group-hover:w-[70%] opacity-0 group-hover:opacity-100"></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Right: Action Button -->
+            <div class="flex items-center gap-4 shrink-0 z-[101] ml-2">
+                <a href="Login-Signup.html" class="bg-[#06b6d4] hover:bg-[#0891b2] text-white px-4 py-1.5 lg:px-6 lg:py-2.5 rounded-full font-medium text-[0.85rem] lg:text-[0.95rem] transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer border-none whitespace-nowrap">
+                    <i class="fa-solid fa-right-to-bracket hidden sm:inline-block"></i> 
+                    <span class="hidden sm:inline-block">Login to Portal</span>
+                    <span class="sm:hidden">Login</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative min-h-[calc(100vh-70px)] flex items-center overflow-hidden py-12 lg:py-0 scroll-mt-[70px]">
+        <!-- Background Animation Blobs -->
+        <div class="absolute top-0 -left-4 w-72 h-72 bg-brand-primary rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob"></div>
+        <div class="absolute top-0 -right-4 w-72 h-72 bg-brand-secondary rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-brand-accent rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-4000"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div data-aos="fade-right" data-aos-duration="1000">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-secondary/10 border border-brand-secondary/20 text-brand-secondary mb-6">
+                        <span class="w-2 h-2 rounded-full bg-brand-secondary animate-pulse"></span>
+                        <span class="text-sm font-medium">Next-Gen Healthcare</span>
+                    </div>
+                    <h1 class="text-5xl lg:text-7xl font-bold leading-tight mb-6">
+                        Centralized Digital <br>
+                        <span class="text-gradient">Healthcare Platform</span>
+                    </h1>
+                    <p class="text-lg text-gray-400 mb-8 max-w-xl leading-relaxed">
+                        Integrating hospital records to improve treatment quality and save time. A unified, secure, and cloud-based system managing all health data in one central location.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button class="bg-gradient-to-r from-brand-secondary to-brand-primary text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:shadow-brand-primary/40 transition-all duration-300 transform hover:-translate-y-1">
+                            Get Started <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                        <button class="px-8 py-4 rounded-full font-semibold text-lg text-white border border-gray-600 hover:bg-gray-800 hover:border-gray-400 transition-all duration-300">
+                            Learn More
+                        </button>
+                    </div>
+                    <div class="mt-10 flex items-center gap-6 text-sm text-gray-400">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-brand-secondary"></i> Central Platform</div>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-brand-secondary"></i> Cloud Storage</div>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-brand-secondary"></i> 24/7 Access</div>
+                    </div>
+                </div>
+
+                <!-- Right Visual/Animation -->
+                <div class="relative hidden lg:block" data-aos="fade-left" data-aos-duration="1200">
+                    <div class="relative w-full h-[500px] flex justify-center items-center">
+                        <div class="absolute z-20 w-40 h-40 rounded-full shadow-[0_0_60px_rgba(20,184,166,0.5)] animate-float overflow-hidden">
+                            <img src="../img/CDHP_Logo.png" alt="CDHP Logo" class="w-full h-full object-cover">
+                        </div>
+                        
+                        <!-- Orbiting Elements -->
+                        <div class="absolute w-72 h-72 border border-dashed border-gray-600 rounded-full animate-[spin_10s_linear_infinite]"></div>
+                        <div class="absolute w-[26rem] h-[26rem] border border-dashed border-gray-700 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+                        
+                        <!-- Floating Cards -->
+                        <div class="absolute top-10 left-10 glass-card p-4 rounded-xl animate-float" style="animation-delay: 1s;">
+                            <div class="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-notes-medical text-teal-400 text-xl"></i>
+                            </div>
+                            <div class="text-sm font-semibold text-white">Digital Record</div>
+                        </div>
+                        
+                        <div class="absolute bottom-10 right-10 glass-card p-4 rounded-xl animate-float" style="animation-delay: 2s;">
+                            <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-video text-blue-400 text-xl"></i>
+                            </div>
+                            <div class="text-sm font-semibold text-white">Telemedicine</div>
+                        </div>
+                        
+                        <div class="absolute top-20 right-0 glass-card p-4 rounded-xl animate-float" style="animation-delay: 1.5s;">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-shield-halved text-indigo-400 text-xl"></i>
+                            </div>
+                            <div class="text-sm font-semibold text-white">100% Secure</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Statement Section -->
+    <section id="problems" class="pt-8 pb-12 md:pt-10 md:pb-16 bg-[#050b14] scroll-mt-[70px]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h3 class="text-3xl md:text-4xl font-bold mb-4">Current Challenges & Limitations</h3>
+                <p class="text-gray-400 max-w-2xl mx-auto">Most hospitals in Bangladesh still rely on manual processes and paper-based records, creating numerous difficulties for both patients and healthcare providers.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Problem Cards -->
+                <div class="glass-card p-8 rounded-2xl border-t border-red-500/30 hover:-translate-y-2 transition-transform duration-300" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-file-excel text-red-400 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-bold">Manual & Fragmented System</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Most hospitals still rely heavily on manual processes and paper-based records, keeping data scattered, disjointed, and leading to overcrowded reception areas.</p>
+                </div>
+                
+                <div class="glass-card p-8 rounded-2xl border-t border-orange-500/30 hover:-translate-y-2 transition-transform duration-300" data-aos="fade-up" data-aos-delay="200">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-clock text-orange-400 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-bold">Long Waiting Times</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Patients face long waiting times for appointments, making the healthcare experience exhausting and inefficient.</p>
+                </div>
+
+                <div class="glass-card p-8 rounded-2xl border-t border-yellow-500/30 hover:-translate-y-2 transition-transform duration-300" data-aos="fade-up" data-aos-delay="300">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-user-injured text-yellow-400 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-bold">Lack of Patient History</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Doctors often lack access to previous medical histories during emergencies, such as past treatments and reports.</p>
+                </div>
+
+                <div class="glass-card p-8 rounded-2xl border-t border-purple-500/30 hover:-translate-y-2 transition-transform duration-300" data-aos="fade-up" data-aos-delay="400">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-house-medical-circle-xmark text-purple-400 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-bold">Limited Access</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Access to specialist consultations is highly difficult for patients residing in rural and remote areas.</p>
+                </div>
+
+                <div class="glass-card p-8 rounded-2xl border-t border-pink-500/30 hover:-translate-y-2 transition-transform duration-300 lg:col-span-2" data-aos="fade-up" data-aos-delay="500">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-pink-500/10 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-triangle-exclamation text-pink-400 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-bold">Risk of Errors</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Paper-based prescriptions significantly increase the risk of medical errors, misread medications, and the chance of losing critical health records.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Objectives Section -->
+    <section id="objectives" class="pt-8 pb-12 md:pt-10 md:pb-16 bg-[#020617] relative overflow-hidden scroll-mt-[70px]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h3 class="text-3xl md:text-4xl font-bold mb-4">Core Objectives</h3>
+                <p class="text-gray-400 max-w-2xl mx-auto">What we aim to achieve with the Centralized Digital Healthcare Platform.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Objective 1 -->
+                <div class="glass-card p-6 rounded-2xl" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary text-xl">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <h4 class="text-lg font-bold">Centralize Records</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Integrate data from all hospitals into a single system for seamless access.</p>
+                </div>
+                <!-- Objective 2 -->
+                <div class="glass-card p-6 rounded-2xl" data-aos="fade-up" data-aos-delay="200">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-brand-secondary/20 flex items-center justify-center text-brand-secondary text-xl">
+                            <i class="fa-solid fa-heart-pulse"></i>
+                        </div>
+                        <h4 class="text-lg font-bold">Improve Quality</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Help doctors make informed decisions by providing complete medical histories.</p>
+                </div>
+                <!-- Objective 3 -->
+                <div class="glass-card p-6 rounded-2xl" data-aos="fade-up" data-aos-delay="300">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-brand-accent/20 flex items-center justify-center text-brand-accent text-xl">
+                            <i class="fa-solid fa-gears"></i>
+                        </div>
+                        <h4 class="text-lg font-bold">Streamline Operations</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Simplify hospital workflows through online booking and digital management.</p>
+                </div>
+                <!-- Objective 4 -->
+                <div class="glass-card p-6 rounded-2xl" data-aos="fade-up" data-aos-delay="400">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-500 text-xl">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h4 class="text-lg font-bold">Ensure Security</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Protect sensitive data using Blockchain and Role-Based Access Control (RBAC).</p>
+                </div>
+                <!-- Objective 5 -->
+                <div class="glass-card p-6 rounded-2xl" data-aos="fade-up" data-aos-delay="500">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 text-xl">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <h4 class="text-lg font-bold">Enhance Experience</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Provide telemedicine capabilities and easy access to personal health records.</p>
+                </div>
+                <!-- Objective 6 -->
+                <div class="glass-card p-6 rounded-2xl" data-aos="fade-up" data-aos-delay="600">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-500 text-xl">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <h4 class="text-lg font-bold">Support Analytics</h4>
+                    </div>
+                    <p class="text-gray-400 text-sm">Provide insights for hospital management and continuous service improvement.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution & Features Section -->
+    <section id="features" class="pt-8 pb-12 md:pt-10 md:pb-16 relative overflow-hidden scroll-mt-[70px]">
+        <!-- Background elements -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-custom opacity-30 pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h3 class="text-3xl md:text-4xl font-bold mb-4">Key Features & Solutions</h3>
+                <p class="text-gray-400 max-w-2xl mx-auto">A unified, secure, and cloud-based platform managing all health data for every patient in one central location, providing easy access to doctors and authorities.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="group relative bg-[#0a101f] p-8 rounded-3xl border border-gray-800 hover:border-brand-secondary/50 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                    <div class="absolute inset-0 bg-gradient-to-br from-brand-secondary/5 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-5">
+                            <div class="w-16 h-16 rounded-2xl bg-brand-secondary/20 flex items-center justify-center shrink-0 transform group-hover:scale-110 transition-transform duration-300">
+                                <i class="fa-solid fa-calendar-check text-brand-secondary text-3xl"></i>
+                            </div>
+                            <h4 class="text-xl md:text-2xl font-bold leading-tight">Online Appointment System</h4>
+                        </div>
+                        <p class="text-gray-400">Patients can effortlessly book appointments online at any connected hospital, anytime, from anywhere.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="group relative bg-[#0a101f] p-8 rounded-3xl border border-gray-800 hover:border-brand-primary/50 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                    <div class="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-5">
+                            <div class="w-16 h-16 rounded-2xl bg-brand-primary/20 flex items-center justify-center shrink-0 transform group-hover:scale-110 transition-transform duration-300">
+                                <i class="fa-solid fa-video text-brand-primary text-3xl"></i>
+                            </div>
+                            <h4 class="text-xl md:text-2xl font-bold leading-tight">Telemedicine Module</h4>
+                        </div>
+                        <p class="text-gray-400">Patients in rural areas can easily conduct seamless video consultations with specialists remotely.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="group relative bg-[#0a101f] p-8 rounded-3xl border border-gray-800 hover:border-brand-accent/50 transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                    <div class="absolute inset-0 bg-gradient-to-br from-brand-accent/5 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-5">
+                            <div class="w-16 h-16 rounded-2xl bg-brand-accent/20 flex items-center justify-center shrink-0 transform group-hover:scale-110 transition-transform duration-300">
+                                <i class="fa-solid fa-file-prescription text-brand-accent text-3xl"></i>
+                            </div>
+                            <h4 class="text-xl md:text-2xl font-bold leading-tight">Digital Prescription</h4>
+                        </div>
+                        <p class="text-gray-400">Doctors will generate digital prescriptions saved directly to the central database, eliminating duplication and loss.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="group relative bg-[#0a101f] p-8 rounded-3xl border border-gray-800 hover:border-teal-500/50 transition-all duration-300" data-aos="fade-up" data-aos-delay="400">
+                    <div class="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-5">
+                            <div class="w-16 h-16 rounded-2xl bg-teal-500/20 flex items-center justify-center shrink-0 transform group-hover:scale-110 transition-transform duration-300">
+                                <i class="fa-solid fa-server text-teal-500 text-3xl"></i>
+                            </div>
+                            <h4 class="text-xl md:text-2xl font-bold leading-tight">Centralized Patient Records</h4>
+                        </div>
+                        <p class="text-gray-400">Doctors can access a patient's entire medical history, including reports and past treatments, with just a single click.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="group relative bg-[#0a101f] p-8 rounded-3xl border border-gray-800 hover:border-indigo-500/50 transition-all duration-300 lg:col-span-2" data-aos="fade-up" data-aos-delay="500">
+                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-5">
+                            <div class="w-16 h-16 shrink-0 rounded-2xl bg-indigo-500/20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                                <i class="fa-solid fa-table-columns text-indigo-500 text-3xl"></i>
+                            </div>
+                            <h4 class="text-xl md:text-2xl font-bold leading-tight">Role-Based Dashboards (RBAC)</h4>
+                        </div>
+                        <p class="text-gray-400 mb-4">The platform offers separate and fully secure portal dashboards tailored for different user roles:</p>
+                        <div class="flex flex-wrap gap-3">
+                            <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">Super Admin Portal</span>
+                            <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">Hospital Admin Portal</span>
+                            <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">Doctor Portal</span>
+                            <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">Patient Portal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Expected Outcomes -->
+    <section class="pt-8 pb-12 md:pt-10 md:pb-16 bg-gradient-to-b from-[#020617] to-[#0a101f] border-t border-white/5 scroll-mt-[70px]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-10 md:p-16 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-brand-primary/20 blur-[80px] rounded-full"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-brand-secondary/20 blur-[80px] rounded-full"></div>
+                
+                <div class="relative z-10 text-center mb-10">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">Expected Outcomes</h2>
+                    <p class="text-gray-400">The significant advantages and benefits of implementing this platform:</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-xl" data-aos="fade-right" data-aos-delay="100">
+                        <div class="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-brand-secondary"></i>
+                        </div>
+                        <p class="text-gray-300">Significantly reduces overall time and cost for patients.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-xl" data-aos="fade-left" data-aos-delay="200">
+                        <div class="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-brand-secondary"></i>
+                        </div>
+                        <p class="text-gray-300">Decreases hospital paperwork and drastically increases operational efficiency.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-xl" data-aos="fade-right" data-aos-delay="300">
+                        <div class="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-brand-secondary"></i>
+                        </div>
+                        <p class="text-gray-300">Enhances patient safety by minimizing medical and prescription errors.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-xl" data-aos="fade-left" data-aos-delay="400">
+                        <div class="w-10 h-10 rounded-full bg-brand-secondary/20 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-brand-secondary"></i>
+                        </div>
+                        <p class="text-gray-300">Creates a centralized healthcare data hub for Bangladesh, aiding in policy-making.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="pt-8 pb-24 md:pt-10 md:pb-32 bg-[#020617] scroll-mt-[70px]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8" data-aos="fade-up">
+                <h2 class="text-sm font-bold tracking-widest text-brand-accent uppercase mb-2">Bangladesh Army University of Engineering & Technology (BAUET)</h2>
+                <h3 class="text-3xl md:text-4xl font-bold mb-8">Project Team</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <!-- Member 1 -->
+                <div class="glass-card p-6 rounded-2xl text-center hover:bg-white/5 transition-colors duration-300" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center mb-4 p-1">
+                        <div class="w-full h-full bg-[#0a101f] rounded-full flex items-center justify-center overflow-hidden">
+                            <img src="../img/protion.jpg" alt="Eftamam Karim Protion" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=Eftamam+Karim&background=0D8ABC&color=fff'">
+                        </div>
+                    </div>
+                    <h4 class="text-lg font-bold">Eftamam Karim Protion</h4>
+                    <p class="text-brand-primary text-sm">Project Member</p>
+                </div>
+
+                <!-- Member 2 -->
+                <div class="glass-card p-6 rounded-2xl text-center hover:bg-white/5 transition-colors duration-300" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-orange-500 to-red-500 flex items-center justify-center mb-4 p-1">
+                        <div class="w-full h-full bg-[#0a101f] rounded-full flex items-center justify-center overflow-hidden">
+                            <img src="../img/maruf.jpg" alt="Md. Abdur Rahman Al Maruf" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=Abdur+Rahman&background=f97316&color=fff'">
+                        </div>
+                    </div>
+                    <h4 class="text-lg font-bold">Md. Abdur Rahman Al Maruf</h4>
+                    <p class="text-orange-400 text-sm">Project Member</p>
+                </div>
+
+                <!-- Member 3 -->
+                <div class="glass-card p-6 rounded-2xl text-center hover:bg-white/5 transition-colors duration-300" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-teal-500 to-green-500 flex items-center justify-center mb-4 p-1">
+                        <div class="w-full h-full bg-[#0a101f] rounded-full flex items-center justify-center overflow-hidden">
+                            <img src="../img/jabin.jpg" alt="Jabin Tasnim" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=Jabin+Tasnim&background=14b8a6&color=fff'">
+                        </div>
+                    </div>
+                    <h4 class="text-lg font-bold">Jabin Tasnim</h4>
+                    <p class="text-brand-secondary text-sm">Project Member</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-[#050b14] py-12 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-gray-400 text-sm mb-2 max-w-md mx-auto">Centralized Digital Healthcare Platform. Integrating Hospital Records to Improve Treatment Quality and Save Time.</p>
+            <p class="text-brand-primary text-sm mb-6 max-w-md mx-auto">Dept. of Computer Science and Engineering, BAUET</p>
+            <p class="text-gray-600 text-sm">&copy; 2026 CDHP Project. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- AOS Animation Script -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Init Scroll Animations
+        AOS.init({
+            once: true,
+            offset: 100,
+            duration: 800,
+            easing: 'ease-in-out-cubic',
+        });
+    </script>
+</body>
+</html>
