@@ -76,7 +76,7 @@ window.initHeader = function() {
 
     // 4. Dynamic Active Link Highlight
     const currentPath = window.location.pathname;
-    const currentFile = currentPath.split('/').pop() || 'PatientDashboard.html'; // Default to dashboard if root
+    const currentFile = currentPath.split('/').pop() || 'PatientDashboard.html';
     
     const navLinks = document.querySelectorAll('.header-nav-link');
     navLinks.forEach(link => {
@@ -93,7 +93,7 @@ window.initHeader = function() {
         signOutBtn.onclick = function(e) {
             e.preventDefault();
             signOut(auth).then(() => {
-                window.location.href = '../src/index.html';
+                window.location.href = 'index.html';
             }).catch((error) => {
                 console.error("Sign Out Error:", error);
             });
