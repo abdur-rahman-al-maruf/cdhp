@@ -612,14 +612,16 @@
                     createdAt: serverTimestamp()
                 };
 
-                //await addDoc(collection(db, "appointments"), apptData);
+                // FIXED: This line was commented out!
+                const docRef = await addDoc(collection(db, "appointments"), apptData);
 
                 // Add this right after saving the appointment in appointment.html
                 await addDoc(collection(db, "notifications"), {
-                    userId: selectedDoctorData.id, // This sends the notification to the selected Doctor
+                    userId: selectedDoctorData.id, 
                     title: "New Appointment Request",
                     message: "A new patient has requested an appointment.",
-                    type: "registration", // Matches the filter in header.js
+                    type: "registration", 
+                    link: `appointment-details.html?id=${docRef.id}`,
                     isRead: false,
                     createdAt: serverTimestamp()
                 });
